@@ -51,4 +51,5 @@ elif menu_option == "Configurações":
     st.subheader("Configurações")
     st.write("Ajustes e preferências da aplicação.")
     st.button("Salvar Configurações")
+    
         
