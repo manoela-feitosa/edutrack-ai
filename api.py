@@ -1,4 +1,4 @@
-import requests
+﻿import requests
 import streamlit as st
 
 BASE_URL = "https://x8ki-letl-twmt.n7.xano.io/api:HRRA97nd"
@@ -6,10 +6,8 @@ BASE_URL = "https://x8ki-letl-twmt.n7.xano.io/api:HRRA97nd"
 
 def get_headers():
     headers = {"Content-Type": "application/json"}
-
     if "auth_token" in st.session_state:
         headers["Authorization"] = f"Bearer {st.session_state.auth_token}"
-
     return headers
 
 
@@ -20,6 +18,10 @@ def api_get(endpoint):
 
 def api_post(endpoint, dados):
     return requests.post(f"{BASE_URL}/{endpoint}", json=dados, headers=get_headers())
+
+
+def api_patch(endpoint, item_id, dados):
+    return requests.patch(f"{BASE_URL}/{endpoint}/{item_id}", json=dados, headers=get_headers())
 
 
 def api_delete(endpoint, item_id):
