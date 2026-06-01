@@ -4,9 +4,7 @@ Sistema academico em Streamlit integrado ao Xano, com painel, professores, disci
 
 ## Rodar o projeto
 
-```powershell
-cd "C:\Users\Manoela Feitosa\edutrack-ai"
-.\.venv\Scripts\python.exe -m streamlit run app.py
+`
 ```
 
 Se preferir instalar dependencias novamente:
