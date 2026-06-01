@@ -1,6 +1,5 @@
-﻿from __future__ import annotations
-
 from datetime import date, timedelta
+from html import escape
 
 import pandas as pd
 import streamlit as st
@@ -17,6 +16,10 @@ def _valor(item, *nomes, padrao=""):
 
 def _disciplinas_por_id(disciplinas):
     return {disc.get("id"): disc.get("nome_disciplina", "Disciplina") for disc in disciplinas}
+
+
+def _eh_tarefa(item):
+    return item.get("tipo", "tarefa") == "tarefa" and _valor(item, "nota", padrao=None) in [None, ""]
 
 
 def _tarefas_pendentes(tarefas):
@@ -138,10 +141,12 @@ def _render_boletim(boletim):
     c1.metric("Média atual", boletim["Média atual"])
     c2.metric("Concluídas", boletim["Tarefas concluídas"])
     c3.metric("Pendentes", boletim["Tarefas pendentes"])
+    melhor = escape(str(boletim["Melhor disciplina"]))
+    dificuldade = escape(str(boletim["Disciplina com mais dificuldade"]))
     st.markdown(
         f"""
-        <div class="automation-card"><b>Melhor disciplina</b><br><span>{boletim['Melhor disciplina']}</span></div>
-        <div class="automation-card"><b>Mais dificuldade</b><br><span>{boletim['Disciplina com mais dificuldade']}</span></div>
+        <div class="automation-card"><b>Melhor disciplina</b><br><span>{melhor}</span></div>
+        <div class="automation-card"><b>Mais dificuldade</b><br><span>{dificuldade}</span></div>
         """,
         unsafe_allow_html=True,
     )
@@ -152,8 +157,8 @@ def modulo_automacoes():
     st.caption("Acompanhe alertas, metas, boletim semanal, calendário e organização da rotina acadêmica.")
 
     disciplinas = api_get("disciplinas")
-    tarefas = api_get("tarefas")
-    registros = tarefas
+    registros = api_get("tarefas")
+    tarefas = [item for item in registros if _eh_tarefa(item)]
     desempenho = _df_desempenho(disciplinas, registros)
     pendentes = _tarefas_pendentes(tarefas)
     recomendacoes = _recomendacoes(desempenho)
@@ -184,8 +189,8 @@ def modulo_automacoes():
         st.subheader("Lembretes de tarefas")
         if pendentes:
             for tarefa in pendentes[:6]:
-                nome = _valor(tarefa, "nome_tarefa", "nome", "titulo", padrao="Tarefa")
-                status = _valor(tarefa, "status", padrao="Pendente")
+                nome = escape(_valor(tarefa, "nome_tarefa", "nome", "titulo", padrao="Tarefa"))
+                status = escape(_valor(tarefa, "status", padrao="Pendente"))
                 st.markdown(f"<div class='automation-card'><b>{nome}</b><br><span>{status}</span></div>", unsafe_allow_html=True)
         else:
             st.success("Nenhuma tarefa pendente.")
@@ -200,8 +205,8 @@ def modulo_automacoes():
         st.markdown(
             f"""
             <div class="automation-card calendar-preview">
-                <b>{payload['summary']}</b><br>
-                <span>{payload['description']}</span><br>
+                <b>{escape(payload['summary'])}</b><br>
+                <span>{escape(payload['description'])}</span><br>
                 <small>Data: {data_entrega.strftime('%d/%m/%Y')}</small>
             </div>
             """,

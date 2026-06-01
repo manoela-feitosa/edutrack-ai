@@ -1,4 +1,4 @@
-﻿from datetime import date
+from datetime import date, datetime
 
 import pandas as pd
 import streamlit as st
@@ -24,6 +24,18 @@ def _formatar_data(valor):
     return texto
 
 
+def _parse_data(valor):
+    if not valor:
+        return date.today()
+    texto = str(valor)[:10]
+    for formato in ("%Y-%m-%d", "%d/%m/%Y"):
+        try:
+            return datetime.strptime(texto, formato).date()
+        except ValueError:
+            pass
+    return date.today()
+
+
 def _normalizar_notas(registros, disciplinas):
     mapa_disciplinas = {disc.get("id"): disc.get("nome_disciplina", "Disciplina") for disc in disciplinas}
     linhas = []
@@ -35,13 +47,22 @@ def _normalizar_notas(registros, disciplinas):
         linhas.append(
             {
                 "Código": _valor(item, "id", "task_id", "tarefas_id", padrao="-"),
-                "Atividade": _valor(item, "nome", "nome_tarefa", "atividade", "titulo", padrao="Avaliação"),
+                "Atividade": _valor(item, "nome_tarefa", "nome", "atividade", "titulo", padrao="Avaliação"),
+                "disc_id": disc_id,
                 "Disciplina": mapa_disciplinas.get(disc_id, _valor(item, "disciplina", "nome_disciplina", padrao="Não informada")),
                 "Nota": nota,
                 "Data": _formatar_data(_valor(item, "data", "data_avaliacao", "created_at", padrao="")),
             }
         )
-    return pd.DataFrame(linhas, columns=["Código", "Atividade", "Disciplina", "Nota", "Data"])
+    return pd.DataFrame(linhas, columns=["Código", "Atividade", "disc_id", "Disciplina", "Nota", "Data"])
+
+
+def _opcoes_por_id(itens, campo_nome):
+    return {
+        f"{item.get(campo_nome, 'Sem nome')} (#{item.get('id')})": item.get("id")
+        for item in itens
+        if item.get("id") is not None
+    }
 
 
 def modulo_notas():
@@ -52,7 +73,7 @@ def modulo_notas():
         st.warning("Cadastre uma disciplina primeiro.")
         return
 
-    opcoes_disciplinas = {disc.get("nome_disciplina", "Disciplina"): disc.get("id") for disc in disciplinas if disc.get("id") is not None}
+    opcoes_disciplinas = _opcoes_por_id(disciplinas, "nome_disciplina")
 
     with st.expander("Lançar nota", expanded=True):
         nome = st.text_input("Nome da atividade/avaliação")
@@ -67,6 +88,7 @@ def modulo_notas():
             resposta = api_post(
                 "tarefas",
                 {
+                    "tipo": "nota",
                     "nome": nome,
                     "nome_tarefa": nome,
                     "disc_id": opcoes_disciplinas[disciplina_escolhida],
@@ -74,12 +96,12 @@ def modulo_notas():
                     "data": data_avaliacao.isoformat(),
                 },
             )
-            if resposta and resposta.status_code in [200, 201]:
+            if resposta is not None and resposta.status_code in [200, 201]:
                 st.success("Nota cadastrada!")
                 st.rerun()
             else:
                 st.error("Erro ao cadastrar nota.")
-                if resposta:
+                if resposta is not None:
                     st.write(resposta.text)
 
     registros = api_get("tarefas")
@@ -89,7 +111,7 @@ def modulo_notas():
         return
 
     st.subheader("Notas cadastradas")
-    st.dataframe(df, use_container_width=True, hide_index=True)
+    st.dataframe(df.drop(columns=["disc_id"]), use_container_width=True, hide_index=True)
 
     st.subheader("Editar ou excluir nota")
     opcoes_notas = {f"{linha['Atividade']} - {linha['Disciplina']} (#{linha['Código']})": linha for _, linha in df.iterrows() if linha["Código"] != "-"}
@@ -103,9 +125,15 @@ def modulo_notas():
 
     with st.form("editar_nota_form"):
         nome_edit = st.text_input("Atividade", value=selecionada["Atividade"])
-        disciplina_edit = st.selectbox("Disciplina", list(opcoes_disciplinas.keys()))
+        nomes_disciplinas = list(opcoes_disciplinas.keys())
+        disciplina_indice = 0
+        for i, nome_disc in enumerate(nomes_disciplinas):
+            if opcoes_disciplinas[nome_disc] == selecionada["disc_id"]:
+                disciplina_indice = i
+                break
+        disciplina_edit = st.selectbox("Disciplina", nomes_disciplinas, index=disciplina_indice)
         nota_edit = st.number_input("Nota", min_value=0.0, max_value=10.0, value=float(selecionada["Nota"]), step=0.1)
-        data_edit = st.date_input("Data da avaliação", value=date.today(), format="DD/MM/YYYY")
+        data_edit = st.date_input("Data da avaliação", value=_parse_data(selecionada["Data"]), format="DD/MM/YYYY")
         salvar = st.form_submit_button("Salvar alterações")
 
     if salvar:
@@ -113,6 +141,7 @@ def modulo_notas():
             "tarefas",
             nota_id,
             {
+                "tipo": "nota",
                 "nome": nome_edit,
                 "nome_tarefa": nome_edit,
                 "disc_id": opcoes_disciplinas[disciplina_edit],
@@ -120,20 +149,20 @@ def modulo_notas():
                 "data": data_edit.isoformat(),
             },
         )
-        if resposta and resposta.status_code in [200, 201]:
+        if resposta is not None and resposta.status_code in [200, 201]:
             st.success("Nota atualizada!")
             st.rerun()
         else:
             st.error("Erro ao atualizar nota.")
-            if resposta:
+            if resposta is not None:
                 st.write(resposta.text)
 
     if st.button("Excluir nota", type="secondary"):
         resposta = api_delete("tarefas", nota_id)
-        if resposta and resposta.status_code in [200, 204]:
+        if resposta is not None and resposta.status_code in [200, 204]:
             st.success("Nota excluída!")
             st.rerun()
         else:
             st.error("Erro ao excluir nota.")
-            if resposta:
+            if resposta is not None:
                 st.write(resposta.text)

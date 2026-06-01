@@ -1,4 +1,4 @@
-// Get tarefas record
+// Get current user's tarefas record by ID
 query "tarefas/{tarefas_id}" verb=GET {
   api_group = "Authentication"
   auth = "user"
@@ -8,14 +8,14 @@ query "tarefas/{tarefas_id}" verb=GET {
   }
 
   stack {
-    db.get tarefas {
-      field_name = "id"
-      field_value = $input.tarefas_id
+    db.query tarefas {
+      where = $db.tarefas.id == $input.tarefas_id && $db.tarefas.user_id == $auth.id
+      return = {type: "single"}
     } as $tarefas
-  
+
     precondition ($tarefas != null) {
       error_type = "notfound"
-      error = "Not Found."
+      error = "Tarefa não encontrada."
     }
   }
 

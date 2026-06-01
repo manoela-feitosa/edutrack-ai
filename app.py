@@ -11,6 +11,8 @@ from modules.perfil import modulo_perfil
 from modules.automacoes import modulo_automacoes
 from styles import TEMAS, carregar_css
 
+REQUEST_TIMEOUT = 10
+
 
 st.set_page_config(
     page_title="EduTrack AI",
@@ -22,10 +24,15 @@ st.set_page_config(
 if "tema_visual_v2" not in st.session_state:
     st.session_state.tema_visual_v2 = "Rosé"
 
+tema_atual = st.session_state.get("tema_visual_v2", "Rosé")
+if tema_atual not in TEMAS:
+    tema_atual = "Rosé"
+    st.session_state.tema_visual_v2 = tema_atual
+
 tema_escolhido = st.sidebar.selectbox(
     "Tema",
     list(TEMAS.keys()),
-    index=list(TEMAS.keys()).index(st.session_state.tema_visual_v2),
+    index=list(TEMAS.keys()).index(tema_atual),
     key="tema_visual_v2",
 )
 
@@ -115,10 +122,15 @@ def tela_acesso():
                 senha = st.text_input("Senha", type="password", placeholder="Digite sua senha")
 
                 if st.form_submit_button("Acessar meu painel"):
-                    resposta = requests.post(
-                        f"{BASE_URL}/auth/login",
-                        json={"email": email, "password": senha},
-                    )
+                    try:
+                        resposta = requests.post(
+                            f"{BASE_URL}/auth/login",
+                            json={"email": email, "password": senha},
+                            timeout=REQUEST_TIMEOUT,
+                        )
+                    except requests.RequestException as exc:
+                        st.error(f"Erro ao comunicar com a API: {exc}")
+                        st.stop()
 
                     if resposta.status_code == 200:
                         dados = resposta.json()
@@ -130,10 +142,15 @@ def tela_acesso():
                             st.stop()
 
                         st.session_state.auth_token = token
-                        usuario = requests.get(
-                            f"{BASE_URL}/auth/me",
-                            headers={"Authorization": f"Bearer {token}"},
-                        )
+                        try:
+                            usuario = requests.get(
+                                f"{BASE_URL}/auth/me",
+                                headers={"Authorization": f"Bearer {token}"},
+                                timeout=REQUEST_TIMEOUT,
+                            )
+                        except requests.RequestException as exc:
+                            st.error(f"Erro ao carregar dados do usuário: {exc}")
+                            st.stop()
 
                         if usuario.status_code == 200:
                             user_data = usuario.json()
@@ -173,10 +190,15 @@ def tela_acesso():
                 senha = st.text_input("Senha para cadastro", type="password")
 
                 if st.form_submit_button("Criar conta"):
-                    resposta = requests.post(
-                        f"{BASE_URL}/auth/signup",
-                        json={"name": nome, "email": email, "password": senha},
-                    )
+                    try:
+                        resposta = requests.post(
+                            f"{BASE_URL}/auth/signup",
+                            json={"name": nome, "email": email, "password": senha},
+                            timeout=REQUEST_TIMEOUT,
+                        )
+                    except requests.RequestException as exc:
+                        st.error(f"Erro ao comunicar com a API: {exc}")
+                        st.stop()
 
                     if resposta.status_code in [200, 201]:
                         st.success("Conta criada com sucesso! Agora faça login.")

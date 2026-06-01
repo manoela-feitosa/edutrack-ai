@@ -1,4 +1,4 @@
-﻿import pandas as pd
+import pandas as pd
 import streamlit as st
 
 from api import api_delete, api_get, api_patch, api_post
@@ -9,6 +9,14 @@ def _valor(item, *nomes, padrao=""):
         if nome in item and item.get(nome) not in [None, ""]:
             return item.get(nome)
     return padrao
+
+
+def _filtrar_tarefas(registros):
+    return [
+        item
+        for item in registros
+        if item.get("tipo", "tarefa") == "tarefa" and _valor(item, "nota", padrao=None) in [None, ""]
+    ]
 
 
 def _normalizar_tarefas(tarefas, disciplinas):
@@ -27,6 +35,14 @@ def _normalizar_tarefas(tarefas, disciplinas):
     return pd.DataFrame(linhas, columns=["Código", "Tarefa", "Disciplina", "Status"])
 
 
+def _opcoes_por_id(itens, campo_nome):
+    return {
+        f"{item.get(campo_nome, 'Sem nome')} (#{item.get('id')})": item.get("id")
+        for item in itens
+        if item.get("id") is not None
+    }
+
+
 def modulo_tarefas():
     st.header("Tarefas")
 
@@ -35,7 +51,7 @@ def modulo_tarefas():
         st.warning("Cadastre uma disciplina primeiro.")
         return
 
-    opcoes_disciplinas = {disc.get("nome_disciplina", "Disciplina"): disc.get("id") for disc in disciplinas if disc.get("id") is not None}
+    opcoes_disciplinas = _opcoes_por_id(disciplinas, "nome_disciplina")
 
     with st.expander("Nova tarefa", expanded=True):
         nome = st.text_input("Nome da tarefa")
@@ -48,17 +64,23 @@ def modulo_tarefas():
                 return
             resposta = api_post(
                 "tarefas",
-                {"nome_tarefa": nome, "nome": nome, "disc_id": opcoes_disciplinas[disciplina_escolhida], "status": status},
+                {
+                    "tipo": "tarefa",
+                    "nome_tarefa": nome,
+                    "nome": nome,
+                    "disc_id": opcoes_disciplinas[disciplina_escolhida],
+                    "status": status,
+                },
             )
-            if resposta and resposta.status_code in [200, 201]:
+            if resposta is not None and resposta.status_code in [200, 201]:
                 st.success("Tarefa cadastrada!")
                 st.rerun()
             else:
                 st.error("Erro ao cadastrar tarefa.")
-                if resposta:
+                if resposta is not None:
                     st.write(resposta.text)
 
-    tarefas = api_get("tarefas")
+    tarefas = _filtrar_tarefas(api_get("tarefas"))
     if not tarefas:
         st.info("Nenhuma tarefa cadastrada ainda.")
         return
@@ -90,29 +112,38 @@ def modulo_tarefas():
                 indice = i
                 break
         disciplina_edit = st.selectbox("Disciplina", nomes, index=indice)
-        status_edit = st.selectbox("Status", ["Pendente", "Em andamento", "Concluída"], index=0)
+        status_opcoes = ["Pendente", "Em andamento", "Concluída"]
+        status_atual = _valor(tarefa, "status", padrao="Pendente")
+        status_indice = status_opcoes.index(status_atual) if status_atual in status_opcoes else 0
+        status_edit = st.selectbox("Status", status_opcoes, index=status_indice)
         salvar = st.form_submit_button("Salvar alterações")
 
     if salvar:
         resposta = api_patch(
             "tarefas",
             tarefa_id,
-            {"nome_tarefa": nome_edit, "nome": nome_edit, "disc_id": opcoes_disciplinas[disciplina_edit], "status": status_edit},
+            {
+                "tipo": "tarefa",
+                "nome_tarefa": nome_edit,
+                "nome": nome_edit,
+                "disc_id": opcoes_disciplinas[disciplina_edit],
+                "status": status_edit,
+            },
         )
-        if resposta and resposta.status_code in [200, 201]:
+        if resposta is not None and resposta.status_code in [200, 201]:
             st.success("Tarefa atualizada!")
             st.rerun()
         else:
             st.error("Erro ao atualizar tarefa.")
-            if resposta:
+            if resposta is not None:
                 st.write(resposta.text)
 
     if st.button("Excluir tarefa", type="secondary"):
         resposta = api_delete("tarefas", tarefa_id)
-        if resposta and resposta.status_code in [200, 204]:
+        if resposta is not None and resposta.status_code in [200, 204]:
             st.success("Tarefa excluída!")
             st.rerun()
         else:
             st.error("Erro ao excluir tarefa.")
-            if resposta:
+            if resposta is not None:
                 st.write(resposta.text)

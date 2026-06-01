@@ -17,12 +17,12 @@ def modulo_professores():
                 return
 
             resposta = api_post("professores", {"nome": nome, "email": email})
-            if resposta and resposta.status_code in [200, 201]:
+            if resposta is not None and resposta.status_code in [200, 201]:
                 st.success("Professor cadastrado!")
                 st.rerun()
             else:
                 st.error("Erro ao cadastrar professor.")
-                if resposta:
+                if resposta is not None:
                     st.write(resposta.text)
 
     dados = api_get("professores")

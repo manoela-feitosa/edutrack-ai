@@ -1,4 +1,4 @@
-// Query all tarefas records
+// Query current user's tarefas records
 query tarefas verb=GET {
   api_group = "Authentication"
   auth = "user"
@@ -8,6 +8,8 @@ query tarefas verb=GET {
 
   stack {
     db.query tarefas {
+      where = $db.tarefas.user_id == $auth.id
+      sort = {tarefas.created_at: "desc"}
       return = {type: "list"}
     } as $tarefas
   }

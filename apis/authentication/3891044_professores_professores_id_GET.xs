@@ -1,4 +1,4 @@
-// Get professores record
+// Get current user's professores record by ID
 query "professores/{professores_id}" verb=GET {
   api_group = "Authentication"
   auth = "user"
@@ -8,14 +8,14 @@ query "professores/{professores_id}" verb=GET {
   }
 
   stack {
-    db.get professores {
-      field_name = "id"
-      field_value = $input.professores_id
+    db.query professores {
+      where = $db.professores.id == $input.professores_id && $db.professores.user_id == $auth.id
+      return = {type: "single"}
     } as $professores
-  
+
     precondition ($professores != null) {
       error_type = "notfound"
-      error = "Not Found."
+      error = "Professor não encontrado."
     }
   }
 

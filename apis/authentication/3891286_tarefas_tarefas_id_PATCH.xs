@@ -1,4 +1,4 @@
-// Edit tarefas record
+// Edit current user's tarefas record
 query "tarefas/{tarefas_id}" verb=PATCH {
   api_group = "Authentication"
   auth = "user"
@@ -11,15 +11,28 @@ query "tarefas/{tarefas_id}" verb=PATCH {
   }
 
   stack {
-    util.get_raw_input {
-      encoding = "json"
-      exclude_middleware = false
-    } as $raw_input
-  
+    db.query tarefas {
+      where = $db.tarefas.id == $input.tarefas_id && $db.tarefas.user_id == $auth.id
+      return = {type: "single"}
+    } as $tarefa_existente
+
+    precondition ($tarefa_existente != null) {
+      error_type = "notfound"
+      error = "Tarefa não encontrada."
+    }
+
     db.patch tarefas {
       field_name = "id"
       field_value = $input.tarefas_id
-      data = `$input|pick:($raw_input|keys)`|filter_null|filter_empty_text
+      data = {
+        disc_id      : $input.disc_id
+        nome_tarefa  : $input.nome_tarefa
+        nome         : $input.nome
+        status       : $input.status
+        tipo         : $input.tipo
+        data         : $input.data
+        nota         : $input.nota
+      }|filter_null|filter_empty_text
     } as $tarefas
   }
 

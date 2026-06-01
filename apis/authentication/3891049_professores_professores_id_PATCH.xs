@@ -1,4 +1,4 @@
-// Edit professores record
+// Edit current user's professores record
 query "professores/{professores_id}" verb=PATCH {
   api_group = "Authentication"
   auth = "user"
@@ -11,15 +11,23 @@ query "professores/{professores_id}" verb=PATCH {
   }
 
   stack {
-    util.get_raw_input {
-      encoding = "json"
-      exclude_middleware = false
-    } as $raw_input
-  
+    db.query professores {
+      where = $db.professores.id == $input.professores_id && $db.professores.user_id == $auth.id
+      return = {type: "single"}
+    } as $professor_existente
+
+    precondition ($professor_existente != null) {
+      error_type = "notfound"
+      error = "Professor não encontrado."
+    }
+
     db.patch professores {
       field_name = "id"
       field_value = $input.professores_id
-      data = `$input|pick:($raw_input|keys)`|filter_null|filter_empty_text
+      data = {
+        nome : $input.nome
+        email: $input.email
+      }|filter_null|filter_empty_text
     } as $professores
   }
 

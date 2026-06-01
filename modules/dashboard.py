@@ -1,12 +1,22 @@
-﻿import pandas as pd
+from html import escape
+
+import pandas as pd
 import plotly.express as px
 import streamlit as st
 
 from api import api_get
 
 
+def _eh_nota(item):
+    return item.get("tipo", "nota") == "nota" or item.get("nota") not in [None, ""]
+
+
+def _eh_tarefa(item):
+    return item.get("tipo", "tarefa") == "tarefa" and item.get("nota") in [None, ""]
+
+
 def modulo_dashboard():
-    nome_usuario = st.session_state.get("user_name", "estudante")
+    nome_usuario = escape(st.session_state.get("user_name", "estudante"))
 
     st.markdown(f"""
     <h1 style='font-size:48px;'>Olá, {nome_usuario}!</h1>
@@ -14,8 +24,9 @@ def modulo_dashboard():
     """, unsafe_allow_html=True)
 
     disciplinas = api_get("disciplinas")
-    tarefas = api_get("tarefas")
-    notas = [item for item in tarefas if item.get("nota") not in [None, ""]]
+    registros = api_get("tarefas")
+    tarefas = [item for item in registros if _eh_tarefa(item)]
+    notas = [item for item in registros if _eh_nota(item)]
 
     total_disciplinas = len(disciplinas)
     total_tarefas = len(tarefas)
@@ -25,7 +36,8 @@ def modulo_dashboard():
         df_notas = pd.DataFrame(notas)
         if "nota" in df_notas.columns:
             df_notas["nota"] = pd.to_numeric(df_notas["nota"], errors="coerce")
-            media_geral = round(df_notas["nota"].dropna().mean(), 1)
+            media = df_notas["nota"].dropna().mean()
+            media_geral = round(media, 1) if pd.notna(media) else 0
 
     col1, col2, col3 = st.columns(3)
     col1.metric("Disciplinas", total_disciplinas)
@@ -48,7 +60,7 @@ def modulo_dashboard():
             )
             df_plot["nota"] = pd.to_numeric(df_plot["nota"], errors="coerce")
             df_plot = df_plot.dropna(subset=["nota"])
-            candidatos_x = ["nome", "nome_tarefa", "titulo", "created_at_nota", "id_nota", "disc_id"]
+            candidatos_x = ["data", "created_at_nota", "nome_tarefa", "nome", "titulo", "id_nota", "disc_id"]
             nome_coluna = next((col for col in candidatos_x if col in df_plot.columns), None)
             if nome_coluna is None or df_plot.empty:
                 st.info("Cadastre notas para visualizar gráficos.")
@@ -68,8 +80,8 @@ def modulo_dashboard():
         st.subheader("Próximas tarefas")
         if tarefas:
             for tarefa in tarefas[:5]:
-                nome = tarefa.get("nome_tarefa", "Tarefa")
-                status = tarefa.get("status", "Pendente")
+                nome = escape(tarefa.get("nome_tarefa", "Tarefa"))
+                status = escape(tarefa.get("status", "Pendente"))
                 st.markdown(f"""
                 <div style="background: rgba(255,255,255,0.55); padding:16px; border-radius:18px; margin-bottom:12px; border:1px solid #F5D0FE;">
                     <b>{nome}</b><br>
@@ -86,7 +98,7 @@ def modulo_dashboard():
         cols = st.columns(2)
         for i, disc in enumerate(disciplinas):
             with cols[i % 2]:
-                nome = disc.get("nome_disciplina", "Disciplina")
+                nome = escape(disc.get("nome_disciplina", "Disciplina"))
                 st.markdown(f"""
                 <div style="background: rgba(255,255,255,0.6); padding:22px; border-radius:24px; margin-bottom:18px; border:1px solid #F5D0FE; box-shadow:0 8px 24px rgba(168,85,247,0.08);">
                     <h4 style="color:#7C3AED; margin-bottom:8px;">{nome}</h4>
@@ -95,6 +107,3 @@ def modulo_dashboard():
                 """, unsafe_allow_html=True)
     else:
         st.info("Nenhuma disciplina cadastrada.")
-
-
-

@@ -12,9 +12,15 @@ query tarefas verb=POST {
   stack {
     db.add tarefas {
       data = {
-        user_id: $auth.id
-        disc_id: $input.disc_id
-        nota   : $input.nota
+        created_at   : "now"
+        user_id      : $auth.id
+        disc_id      : $input.disc_id
+        nome_tarefa  : $input.nome_tarefa
+        nome         : $input.nome
+        status       : $input.status
+        tipo         : $input.tipo
+        data         : $input.data
+        nota         : $input.nota
       }
     } as $tarefas
   }

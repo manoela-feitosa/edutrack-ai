@@ -1,4 +1,4 @@
-// Get disciplinas record
+// Get current user's disciplinas record by ID
 query "disciplinas/{disciplinas_id}" verb=GET {
   api_group = "Authentication"
   auth = "user"
@@ -8,14 +8,14 @@ query "disciplinas/{disciplinas_id}" verb=GET {
   }
 
   stack {
-    db.get disciplinas {
-      field_name = "id"
-      field_value = $input.disciplinas_id
+    db.query disciplinas {
+      where = $db.disciplinas.id == $input.disciplinas_id && $db.disciplinas.user_id == $auth.id
+      return = {type: "single"}
     } as $model
-  
+
     precondition ($model != null) {
       error_type = "notfound"
-      error = "Not Found"
+      error = "Disciplina não encontrada."
     }
   }
 
