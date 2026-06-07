@@ -1,25 +1,57 @@
-﻿# EduTrack AI
+# EduTrack AI
 
-Sistema academico em Streamlit integrado ao Xano, com painel, professores, disciplinas, tarefas, notas, perfil, assistente de IA e automacoes inteligentes.
+O EduTrack AI é um sistema acadêmico desenvolvido em Python utilizando Streamlit no front-end e Xano como back-end.
 
-## Rodar o projeto
+O objetivo do projeto é auxiliar estudantes no gerenciamento de suas atividades acadêmicas, permitindo o controle de disciplinas, professores, tarefas e notas em um ambiente centralizado e intuitivo.
 
-`
+## Funcionalidades Implementadas
+
+* Autenticação de usuários.
+* Cadastro e gerenciamento de professores.
+* Cadastro e gerenciamento de disciplinas.
+* Cadastro e acompanhamento de tarefas.
+* Registro e consulta de notas.
+* Perfil do usuário.
+* Dashboard com visualização das informações acadêmicas.
+* Integração com API do Xano para armazenamento e recuperação de dados.
+
+## Tecnologias Utilizadas
+
+* Python
+* Streamlit
+* Xano
+* REST API
+* Git e GitHub
+
+## Como Executar o Projeto
+
+```powershell
+streamlit run app.py
 ```
 
-Se preferir instalar dependencias novamente:
+Para instalar as dependências:
 
 ```powershell
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
-## Modulos de IA e automacao
+## Estrutura do Sistema
 
-- `AI Assistant`: analisa notas por disciplina, identifica risco de media abaixo de 6, recomenda estudos e cria cronograma semanal.
-- `Automações`: mostra progresso de tarefas, boletim semanal, sugestoes automaticas, estrutura pronta para Google Calendar e cronograma automatico.
+O sistema é composto pelos seguintes módulos:
 
-## Integracoes preparadas
+* Dashboard
+* Professores
+* Disciplinas
+* Tarefas
+* Notas
+* Perfil
+* Configurações
 
-- Xano para autenticação e CRUD.
-- Google Calendar por payload pronto para envio a uma API externa.
-- Gmail, WhatsApp e Telegram podem usar a mesma camada de automacoes.
+## Possíveis Melhorias Futuras
+
+* Integração com Google Calendar.
+* Persistência completa dos dados de perfil.
+* Integração com IA generativa.
+* Sistema de notificações.
+* Aplicativo mobile.
+* Relatórios acadêmicos mais avançados.
