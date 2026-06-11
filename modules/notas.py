@@ -3,7 +3,7 @@ from datetime import date, datetime
 import pandas as pd
 import streamlit as st
 
-from api import api_delete, api_get, api_patch, api_post
+from services.api import api_delete, api_get, api_patch, api_post
 
 
 def _valor(item, *nomes, padrao=""):

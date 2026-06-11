@@ -1,6 +1,6 @@
 import streamlit as st
 
-from api import api_delete_endpoint, api_patch_endpoint
+from services.api import api_delete_endpoint, api_patch_endpoint
 
 
 def modulo_perfil():

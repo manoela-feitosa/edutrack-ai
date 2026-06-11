@@ -4,7 +4,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-from api import api_get
+from services.api import api_get
 
 
 def _eh_nota(item):

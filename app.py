@@ -1,7 +1,7 @@
 ﻿import requests
 import streamlit as st
 
-from api import BASE_URL
+from services.api import BASE_URL
 from modules.dashboard import modulo_dashboard
 from modules.professores import modulo_professores
 from modules.disciplinas import modulo_disciplinas
@@ -9,7 +9,7 @@ from modules.tarefas import modulo_tarefas
 from modules.notas import modulo_notas
 from modules.perfil import modulo_perfil
 from modules.automacoes import modulo_automacoes
-from styles import TEMAS, carregar_css
+from utils.styles import TEMAS, carregar_css
 
 REQUEST_TIMEOUT = 10
 DEFAULT_THEME = "Rosé"
