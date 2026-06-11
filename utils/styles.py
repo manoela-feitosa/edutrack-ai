@@ -155,6 +155,7 @@ def carregar_css(nome_tema="Oceano"):
     st.markdown(f"""
     <style>
     :root {{
+        color-scheme: light;
         --bg1: {tema['bg1']};
         --bg2: {tema['bg2']};
         --bg3: {tema['bg3']};
@@ -178,6 +179,13 @@ def carregar_css(nome_tema="Oceano"):
         background: {app_background};
         background-attachment: fixed;
         color: var(--text);
+        color-scheme: light;
+    }}
+
+    html,
+    body,
+    [data-testid="stAppViewContainer"] {{
+        color-scheme: light;
     }}
 
     header[data-testid="stHeader"] {{
@@ -322,6 +330,7 @@ def carregar_css(nome_tema="Oceano"):
     div[data-testid="stForm"] {{
         border: none;
         padding: 0;
+        background: transparent !important;
     }}
 
     label {{
@@ -437,6 +446,28 @@ def carregar_css(nome_tema="Oceano"):
     div[data-baseweb="popover"] ul,
     div[data-baseweb="popover"] div[role="listbox"] {{
         background: var(--surface-solid) !important;
+    }}
+
+    div[data-testid="stDataFrame"],
+    div[data-testid="stDataFrame"] *,
+    div[data-testid="stTable"],
+    div[data-testid="stTable"] * {{
+        color-scheme: light;
+    }}
+
+    div[data-testid="stDataFrame"] div,
+    div[data-testid="stDataFrame"] span,
+    div[data-testid="stDataFrame"] p {{
+        color: var(--text) !important;
+    }}
+
+    div[data-testid="stExpander"] {{
+        color-scheme: light;
+    }}
+
+    div[data-testid="stExpander"] > details {{
+        background: var(--surface) !important;
+        border-radius: 16px !important;
     }}
 
     h1, h2, h3, h4 {{
