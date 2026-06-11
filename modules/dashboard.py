@@ -7,26 +7,34 @@ import streamlit as st
 from services.api import api_get
 
 
+def _tipo(item):
+    return str(item.get("tipo") or item.get("Tipo") or "tarefa").strip().lower()
+
+
 def _eh_nota(item):
-    return item.get("tipo", "nota") == "nota" or item.get("nota") not in [None, ""]
+    return _tipo(item) == "nota"
 
 
 def _eh_tarefa(item):
-    return item.get("tipo", "tarefa") == "tarefa" and item.get("nota") in [None, ""]
+    return _tipo(item) != "nota"
 
 
 def modulo_dashboard():
     nome_usuario = escape(st.session_state.get("user_name", "estudante"))
 
-    st.markdown(f"""
-    <h1 style='font-size:48px;'>Olá, {nome_usuario}!</h1>
-    <p style='font-size:20px; color:#7C3AED;'>Que bom te ver de novo.</p>
-    """, unsafe_allow_html=True)
+    st.markdown(
+        f"""
+        <h1 style="font-size:48px;">Olá, {nome_usuario}!</h1>
+        <p style="font-size:20px; color:var(--primary);">Que bom te ver de novo.</p>
+        """,
+        unsafe_allow_html=True,
+    )
 
     disciplinas = api_get("disciplinas")
     registros = api_get("tarefas")
     if disciplinas is None or registros is None:
         return
+
     tarefas = [item for item in registros if _eh_tarefa(item)]
     notas = [item for item in registros if _eh_nota(item)]
 
@@ -69,10 +77,28 @@ def modulo_dashboard():
             else:
                 fig = px.line(df_plot, x=nome_coluna, y="nota", color="nome_disciplina", markers=True)
                 fig.update_layout(
-                    paper_bgcolor="rgba(0,0,0,0)",
-                    plot_bgcolor="rgba(0,0,0,0)",
-                    font=dict(color="#4C1D95"),
-                    margin=dict(l=20, r=20, t=30, b=20),
+                    paper_bgcolor="rgba(255,255,255,0)",
+                    plot_bgcolor="rgba(248,235,244,0.92)",
+                    font=dict(color="#1F2937"),
+                    legend=dict(
+                        bgcolor="rgba(248,235,244,0.92)",
+                        bordercolor="rgba(31,41,55,0.12)",
+                        borderwidth=1,
+                        font=dict(color="#1F2937"),
+                    ),
+                    margin=dict(l=24, r=24, t=30, b=24),
+                )
+                fig.update_xaxes(
+                    gridcolor="rgba(31,41,55,0.12)",
+                    linecolor="rgba(31,41,55,0.25)",
+                    tickfont=dict(color="#374151"),
+                    title_font=dict(color="#374151"),
+                )
+                fig.update_yaxes(
+                    gridcolor="rgba(31,41,55,0.16)",
+                    linecolor="rgba(31,41,55,0.25)",
+                    tickfont=dict(color="#374151"),
+                    title_font=dict(color="#374151"),
                 )
                 st.plotly_chart(fig, use_container_width=True)
         else:
@@ -82,14 +108,17 @@ def modulo_dashboard():
         st.subheader("Próximas tarefas")
         if tarefas:
             for tarefa in tarefas[:5]:
-                nome = escape(tarefa.get("nome_tarefa", "Tarefa"))
-                status = escape(tarefa.get("status", "Pendente"))
-                st.markdown(f"""
-                <div style="background: rgba(255,255,255,0.55); padding:16px; border-radius:18px; margin-bottom:12px; border:1px solid #F5D0FE;">
-                    <b>{nome}</b><br>
-                    <span style='color:#7C3AED'>{status}</span>
-                </div>
-                """, unsafe_allow_html=True)
+                nome = escape(tarefa.get("nome_tarefa") or tarefa.get("nome") or "Tarefa")
+                status = escape(tarefa.get("status") or "Pendente")
+                st.markdown(
+                    f"""
+                    <div class="automation-card">
+                        <b>{nome}</b><br>
+                        <span>{status}</span>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
         else:
             st.info("Nenhuma tarefa cadastrada.")
 
@@ -101,11 +130,14 @@ def modulo_dashboard():
         for i, disc in enumerate(disciplinas):
             with cols[i % 2]:
                 nome = escape(disc.get("nome_disciplina", "Disciplina"))
-                st.markdown(f"""
-                <div style="background: rgba(255,255,255,0.6); padding:22px; border-radius:24px; margin-bottom:18px; border:1px solid #F5D0FE; box-shadow:0 8px 24px rgba(168,85,247,0.08);">
-                    <h4 style="color:#7C3AED; margin-bottom:8px;">{nome}</h4>
-                    <p style="color:#6D28D9; margin:0;">Continue evoluindo.</p>
-                </div>
-                """, unsafe_allow_html=True)
+                st.markdown(
+                    f"""
+                    <div class="automation-card">
+                        <b>{nome}</b><br>
+                        <span>Continue evoluindo.</span>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
     else:
         st.info("Nenhuma disciplina cadastrada.")

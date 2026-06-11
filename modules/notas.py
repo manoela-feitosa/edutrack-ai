@@ -13,6 +13,10 @@ def _valor(item, *nomes, padrao=""):
     return padrao
 
 
+def _tipo(item):
+    return str(_valor(item, "tipo", "Tipo", padrao="tarefa")).strip().lower()
+
+
 def _formatar_data(valor):
     if not valor:
         return ""
@@ -40,7 +44,7 @@ def _normalizar_notas(registros, disciplinas):
     mapa_disciplinas = {disc.get("id"): disc.get("nome_disciplina", "Disciplina") for disc in disciplinas}
     linhas = []
     for item in registros:
-        if item.get("tipo") != "nota":
+        if _tipo(item) != "nota":
             continue
         nota = _valor(item, "nota", padrao=None)
         if nota in [None, ""]:

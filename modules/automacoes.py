@@ -14,12 +14,16 @@ def _valor(item, *nomes, padrao=""):
     return padrao
 
 
+def _tipo(item):
+    return str(_valor(item, "tipo", "Tipo", padrao="tarefa")).strip().lower()
+
+
 def _disciplinas_por_id(disciplinas):
     return {disc.get("id"): disc.get("nome_disciplina", "Disciplina") for disc in disciplinas}
 
 
 def _eh_tarefa(item):
-    return item.get("tipo", "tarefa") != "nota"
+    return _tipo(item) != "nota"
 
 
 def _tarefas_pendentes(tarefas):
@@ -36,7 +40,7 @@ def _df_desempenho(disciplinas, registros):
         return pd.DataFrame(columns=["disc_id", "Disciplina", "Media", "Qtd notas"])
 
     mapa = _disciplinas_por_id(disciplinas)
-    notas = [item for item in registros if item.get("tipo") == "nota"]
+    notas = [item for item in registros if _tipo(item) == "nota"]
     if not notas:
         return pd.DataFrame(
             [{"disc_id": disc_id, "Disciplina": nome, "Media": 0.0, "Qtd notas": 0} for disc_id, nome in mapa.items()]

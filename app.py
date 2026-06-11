@@ -13,7 +13,7 @@ from utils.styles import TEMAS, carregar_css
 
 REQUEST_TIMEOUT = 10
 DEFAULT_THEME = "Rosé"
-THEME_VERSION = "theme-persist-v3"
+THEME_VERSION = "professional-ui-v1"
 
 
 st.set_page_config(

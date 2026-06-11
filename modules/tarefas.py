@@ -11,11 +11,15 @@ def _valor(item, *nomes, padrao=""):
     return padrao
 
 
+def _tipo(item):
+    return str(_valor(item, "tipo", "Tipo", padrao="tarefa")).strip().lower()
+
+
 def _filtrar_tarefas(registros):
     return [
         item
         for item in registros
-        if item.get("tipo", "tarefa") != "nota"
+        if _tipo(item) != "nota"
     ]
 
 

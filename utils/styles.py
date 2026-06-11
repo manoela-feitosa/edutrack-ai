@@ -18,6 +18,8 @@ TEMAS = {
         "input_bg": "rgba(255,255,255,0.94)",
         "input_text": "#241B33",
         "input_border": "rgba(255,255,255,0.32)",
+        "surface": "rgba(255,255,255,0.13)",
+        "surface_solid": "#1E1B4B",
         "star_overlay": True,
     },
     "Obsidiana": {
@@ -36,6 +38,8 @@ TEMAS = {
         "input_bg": "rgba(255,255,255,0.94)",
         "input_text": "#111827",
         "input_border": "rgba(255,255,255,0.30)",
+        "surface": "rgba(255,255,255,0.12)",
+        "surface_solid": "#24162F",
         "star_overlay": True,
     },
     "Oceano": {
@@ -138,6 +142,8 @@ def carregar_css(nome_tema="Oceano"):
     input_bg = tema.get("input_bg", "white")
     input_text = tema.get("input_text", tema["text"])
     input_border = tema.get("input_border", "rgba(31,41,51,0.18)")
+    surface = tema.get("surface", "rgba(255,255,255,0.84)")
+    surface_solid = tema.get("surface_solid", "#FFFFFF")
     app_background = (
         "radial-gradient(circle at 16% 18%, rgba(255,255,255,0.34) 0 1px, transparent 1.8px),"
         "radial-gradient(circle at 76% 16%, rgba(255,255,255,0.24) 0 1px, transparent 1.8px),"
@@ -164,6 +170,8 @@ def carregar_css(nome_tema="Oceano"):
         --input-bg: {input_bg};
         --input-text: {input_text};
         --input-border: {input_border};
+        --surface: {surface};
+        --surface-solid: {surface_solid};
     }}
 
     .stApp {{
@@ -189,8 +197,13 @@ def carregar_css(nome_tema="Oceano"):
     }}
 
     [data-testid="stSidebar"] {{
-        background: rgba(255,255,255,0.54);
+        background: rgba(255,255,255,0.62);
         border-right: 1px solid var(--card-border);
+    }}
+
+    [data-testid="stSidebar"],
+    [data-testid="stSidebar"] * {{
+        color: var(--text) !important;
     }}
 
     .hero-login {{
@@ -268,7 +281,7 @@ def carregar_css(nome_tema="Oceano"):
     }}
 
     div[data-testid="stTabs"] {{
-        background: var(--card);
+        background: var(--surface);
         border: 1px solid var(--card-border);
         border-radius: 22px;
         padding: 42px;
@@ -366,7 +379,7 @@ def carregar_css(nome_tema="Oceano"):
     div[data-testid="metric-container"],
     div[data-testid="stExpander"],
     .automation-card {{
-        background: var(--card);
+        background: var(--surface);
         border: 1px solid var(--card-border);
         border-radius: 16px;
         box-shadow: 0 8px 24px var(--shadow);
@@ -377,8 +390,15 @@ def carregar_css(nome_tema="Oceano"):
         padding: 18px;
     }}
 
+    div[data-testid="stExpander"] summary,
+    div[data-testid="stExpander"] summary *,
+    div[data-testid="stExpander"] details,
+    div[data-testid="stExpander"] details * {{
+        color: var(--text) !important;
+    }}
+
     .stDataFrame {{
-        background: var(--card);
+        background: var(--surface);
         border-radius: 16px;
     }}
 
@@ -402,9 +422,21 @@ def carregar_css(nome_tema="Oceano"):
     }}
 
     div[data-testid="stSelectbox"] div[data-baseweb="select"] {{
-        background: rgba(255,255,255,0.78) !important;
+        background: var(--input-bg) !important;
         border-radius: 12px !important;
-        border-color: var(--card-border) !important;
+        border: 1px solid var(--input-border) !important;
+        color: var(--input-text) !important;
+    }}
+
+    div[data-testid="stSelectbox"] div[data-baseweb="select"] *,
+    div[data-baseweb="popover"] li,
+    div[data-baseweb="popover"] div {{
+        color: var(--input-text) !important;
+    }}
+
+    div[data-baseweb="popover"] ul,
+    div[data-baseweb="popover"] div[role="listbox"] {{
+        background: var(--surface-solid) !important;
     }}
 
     h1, h2, h3, h4 {{
