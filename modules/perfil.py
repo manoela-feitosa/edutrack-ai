@@ -1,4 +1,6 @@
-﻿import streamlit as st
+import streamlit as st
+
+from api import api_delete_endpoint, api_patch_endpoint
 
 
 def modulo_perfil():
@@ -33,7 +35,7 @@ def modulo_perfil():
 
     with st.expander("Editar perfil", expanded=False):
         nome = st.text_input("Nome", value=nome_atual, placeholder="Digite seu nome")
-        email = st.text_input("E-mail", value=email_atual, placeholder="Digite seu e-mail")
+        st.text_input("E-mail", value=email_atual, disabled=True)
         curso = st.text_input("Curso", value=curso_atual, placeholder="Ex.: Sistemas de Informação")
         opcoes_semestre = [
             "Selecione o semestre",
@@ -59,11 +61,26 @@ def modulo_perfil():
         lembretes = st.checkbox("Receber lembretes de tarefas", value=lembretes_atual)
 
         if st.button("Salvar perfil"):
-            st.session_state.user_name = nome
-            st.session_state.user_email = email
-            st.session_state.user_curso = curso
-            st.session_state.user_semestre = semestre if semestre != "Selecione o semestre" else ""
-            st.session_state.user_objetivo = objetivo
-            st.session_state.user_lembretes = lembretes
-            st.success("Perfil salvo com sucesso!")
-            st.rerun()
+            resposta = api_patch_endpoint("auth/me", {"name": nome})
+            if resposta is not None and resposta.status_code in [200, 201]:
+                st.session_state.user_name = nome
+                st.session_state.user_curso = curso
+                st.session_state.user_semestre = semestre if semestre != "Selecione o semestre" else ""
+                st.session_state.user_objetivo = objetivo
+                st.session_state.user_lembretes = lembretes
+                st.success("Perfil salvo com sucesso!")
+                st.rerun()
+            else:
+                st.error("Não foi possível salvar o perfil. Tente novamente.")
+
+    with st.expander("Excluir conta", expanded=False):
+        st.warning("Esta ação exclui sua conta e seus dados de acesso. Essa ação não pode ser desfeita.")
+        confirmar = st.text_input("Digite EXCLUIR para confirmar")
+        if st.button("Excluir minha conta", type="secondary", disabled=confirmar != "EXCLUIR"):
+            resposta = api_delete_endpoint("auth/me")
+            if resposta is not None and resposta.status_code in [200, 204]:
+                st.session_state.clear()
+                st.success("Conta excluída.")
+                st.rerun()
+            else:
+                st.error("Não foi possível excluir sua conta. Tente novamente.")

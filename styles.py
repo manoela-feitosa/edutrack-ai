@@ -2,6 +2,42 @@
 
 
 TEMAS = {
+    "Céu Estrelado": {
+        "bg1": "#0F172A",
+        "bg2": "#312E81",
+        "bg3": "#1E1B4B",
+        "bg4": "#3B1D5F",
+        "text": "#F8FAFC",
+        "muted": "#D7DDFB",
+        "primary": "#1E3A8A",
+        "primary2": "#4C1D95",
+        "accent": "#38BDF8",
+        "card": "rgba(255,255,255,0.13)",
+        "card_border": "rgba(255,255,255,0.24)",
+        "shadow": "rgba(15,23,42,0.34)",
+        "input_bg": "rgba(255,255,255,0.94)",
+        "input_text": "#241B33",
+        "input_border": "rgba(255,255,255,0.32)",
+        "star_overlay": True,
+    },
+    "Obsidiana": {
+        "bg1": "#050509",
+        "bg2": "#111827",
+        "bg3": "#24162F",
+        "bg4": "#1E1B4B",
+        "text": "#F9FAFB",
+        "muted": "#C7D2FE",
+        "primary": "#4F46E5",
+        "primary2": "#1D4ED8",
+        "accent": "#818CF8",
+        "card": "rgba(255,255,255,0.12)",
+        "card_border": "rgba(255,255,255,0.20)",
+        "shadow": "rgba(0,0,0,0.42)",
+        "input_bg": "rgba(255,255,255,0.94)",
+        "input_text": "#111827",
+        "input_border": "rgba(255,255,255,0.30)",
+        "star_overlay": True,
+    },
     "Oceano": {
         "bg1": "#E8F3F5",
         "bg2": "#D7E8EC",
@@ -42,9 +78,9 @@ TEMAS = {
         "shadow": "rgba(52,64,84,0.10)",
     },
     "Rosé": {
-        "bg1": "#FFF1F5",
-        "bg2": "#F9DDE8",
-        "bg3": "#F7EEF6",
+        "bg1": "#F4C7D5",
+        "bg2": "#A99BC8",
+        "bg3": "#16213E",
         "text": "#3A2430",
         "muted": "#7A5B68",
         "primary": "#B8326A",
@@ -98,12 +134,25 @@ TEMAS = {
 
 def carregar_css(nome_tema="Oceano"):
     tema = TEMAS.get(nome_tema, TEMAS["Oceano"])
+    bg4 = tema.get("bg4", tema["bg3"])
+    input_bg = tema.get("input_bg", "white")
+    input_text = tema.get("input_text", tema["text"])
+    input_border = tema.get("input_border", "rgba(31,41,51,0.18)")
+    app_background = (
+        "radial-gradient(circle at 16% 18%, rgba(255,255,255,0.34) 0 1px, transparent 1.8px),"
+        "radial-gradient(circle at 76% 16%, rgba(255,255,255,0.24) 0 1px, transparent 1.8px),"
+        "radial-gradient(circle at 48% 68%, rgba(255,255,255,0.18) 0 1px, transparent 1.8px),"
+        "linear-gradient(135deg, var(--bg1) 0%, var(--bg2) 42%, var(--bg3) 72%, var(--bg4) 100%)"
+        if tema.get("star_overlay")
+        else "linear-gradient(135deg, var(--bg1) 0%, var(--bg2) 52%, var(--bg3) 100%)"
+    )
     st.markdown(f"""
     <style>
     :root {{
         --bg1: {tema['bg1']};
         --bg2: {tema['bg2']};
         --bg3: {tema['bg3']};
+        --bg4: {bg4};
         --text: {tema['text']};
         --muted: {tema['muted']};
         --primary: {tema['primary']};
@@ -112,10 +161,14 @@ def carregar_css(nome_tema="Oceano"):
         --card: {tema['card']};
         --card-border: {tema['card_border']};
         --shadow: {tema['shadow']};
+        --input-bg: {input_bg};
+        --input-text: {input_text};
+        --input-border: {input_border};
     }}
 
     .stApp {{
-        background: linear-gradient(135deg, var(--bg1) 0%, var(--bg2) 52%, var(--bg3) 100%);
+        background: {app_background};
+        background-attachment: fixed;
         color: var(--text);
     }}
 
@@ -224,13 +277,33 @@ def carregar_css(nome_tema="Oceano"):
     }}
 
     button[data-baseweb="tab"] {{
-        color: var(--text) !important;
+        color: var(--muted) !important;
         font-size: 18px !important;
         font-weight: 700 !important;
     }}
 
     button[data-baseweb="tab"][aria-selected="true"] {{
         color: var(--primary) !important;
+    }}
+
+    .forgot-password-link {{
+        display: block;
+        width: fit-content;
+        margin: 14px 0 0 0;
+        color: var(--muted) !important;
+        font-weight: 700;
+        text-decoration: none !important;
+    }}
+
+    .forgot-password-inline {{
+        margin: 26px 0 0 auto;
+        text-align: right;
+        white-space: nowrap;
+    }}
+
+    .forgot-password-link:hover {{
+        color: var(--primary) !important;
+        text-decoration: underline !important;
     }}
 
     div[data-testid="stForm"] {{
@@ -246,11 +319,11 @@ def carregar_css(nome_tema="Oceano"):
     input,
     textarea {{
         border-radius: 12px !important;
-        border: 1px solid rgba(31,41,51,0.18) !important;
-        background: white !important;
+        border: 1px solid var(--input-border) !important;
+        background: var(--input-bg) !important;
         padding: 15px !important;
         font-size: 16px !important;
-        color: var(--text) !important;
+        color: var(--input-text) !important;
     }}
 
     input:focus,
@@ -312,8 +385,9 @@ def carregar_css(nome_tema="Oceano"):
     div[data-testid="stTextInput"] input,
     div[data-testid="stTextArea"] textarea {{
         border-radius: 12px !important;
-        border: 1px solid rgba(31,41,51,0.18) !important;
-        background: white !important;
+        border: 1px solid var(--input-border) !important;
+        background: var(--input-bg) !important;
+        color: var(--input-text) !important;
         padding: 15px !important;
         font-size: 16px !important;
     }}

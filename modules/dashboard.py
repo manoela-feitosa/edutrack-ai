@@ -25,6 +25,8 @@ def modulo_dashboard():
 
     disciplinas = api_get("disciplinas")
     registros = api_get("tarefas")
+    if disciplinas is None or registros is None:
+        return
     tarefas = [item for item in registros if _eh_tarefa(item)]
     notas = [item for item in registros if _eh_nota(item)]
 

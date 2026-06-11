@@ -1,7 +1,12 @@
-﻿import pandas as pd
+import pandas as pd
 import streamlit as st
 
-from api import api_get, api_post
+from api import api_delete, api_get, api_patch, api_post
+
+
+def _valor(item, nome, padrao=""):
+    valor = item.get(nome)
+    return valor if valor not in [None, ""] else padrao
 
 
 def modulo_professores():
@@ -21,14 +26,63 @@ def modulo_professores():
                 st.success("Professor cadastrado!")
                 st.rerun()
             else:
-                st.error("Erro ao cadastrar professor.")
-                if resposta is not None:
-                    st.write(resposta.text)
+                st.error("Não foi possível cadastrar o professor. Verifique os dados e tente novamente.")
 
     dados = api_get("professores")
-    if dados:
-        st.subheader("Professores cadastrados")
-        df = pd.DataFrame(dados).rename(columns={"id": "Código", "nome": "Professor", "email": "E-mail"})
-        st.dataframe(df[["Código", "Professor", "E-mail"]], use_container_width=True, hide_index=True)
-    else:
+    if dados is None:
+        return
+    if not dados:
         st.info("Nenhum professor cadastrado ainda.")
+        return
+
+    st.subheader("Professores cadastrados")
+    df = pd.DataFrame(dados).rename(columns={"id": "Código", "nome": "Professor", "email": "E-mail"})
+    st.dataframe(df[["Código", "Professor", "E-mail"]], use_container_width=True, hide_index=True)
+
+    with st.expander("Editar ou excluir professor", expanded=False):
+        professores_com_id = [prof for prof in dados if prof.get("id") is not None]
+        opcoes_professores = {
+            f"{_valor(prof, 'nome', 'Professor')} (#{prof.get('id')})": prof
+            for prof in professores_com_id
+        }
+
+        if not opcoes_professores:
+            st.info("Nenhum professor com código válido para editar ou excluir.")
+            return
+
+        escolha = st.selectbox("Selecione o professor", list(opcoes_professores.keys()))
+        professor = opcoes_professores[escolha]
+        professor_id = professor["id"]
+
+        with st.form("editar_professor_form"):
+            nome_edit = st.text_input("Nome", value=_valor(professor, "nome"))
+            email_edit = st.text_input("E-mail", value=_valor(professor, "email"))
+            confirmar_exclusao = st.checkbox("Confirmar exclusão do professor selecionado")
+            col_salvar, col_excluir = st.columns(2)
+            with col_salvar:
+                salvar = st.form_submit_button("Salvar alterações")
+            with col_excluir:
+                excluir = st.form_submit_button(
+                    "Excluir professor",
+                    type="secondary",
+                    disabled=not confirmar_exclusao,
+                )
+
+        if salvar:
+            if not nome_edit or not email_edit:
+                st.warning("Preencha o nome e o e-mail do professor.")
+                return
+            resposta = api_patch("professores", professor_id, {"nome": nome_edit, "email": email_edit})
+            if resposta is not None and resposta.status_code in [200, 201]:
+                st.success("Professor atualizado!")
+                st.rerun()
+            else:
+                st.error("Não foi possível atualizar o professor. Tente novamente.")
+
+        if excluir:
+            resposta = api_delete("professores", professor_id)
+            if resposta is not None and resposta.status_code in [200, 204]:
+                st.success("Professor excluído!")
+                st.rerun()
+            else:
+                st.error("Não foi possível excluir o professor. Tente novamente.")

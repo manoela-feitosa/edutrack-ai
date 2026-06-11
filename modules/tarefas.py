@@ -15,7 +15,7 @@ def _filtrar_tarefas(registros):
     return [
         item
         for item in registros
-        if item.get("tipo", "tarefa") == "tarefa" and _valor(item, "nota", padrao=None) in [None, ""]
+        if item.get("tipo", "tarefa") != "nota"
     ]
 
 
@@ -47,6 +47,8 @@ def modulo_tarefas():
     st.header("Tarefas")
 
     disciplinas = api_get("disciplinas")
+    if disciplinas is None:
+        return
     if not disciplinas:
         st.warning("Cadastre uma disciplina primeiro.")
         return
@@ -76,11 +78,12 @@ def modulo_tarefas():
                 st.success("Tarefa cadastrada!")
                 st.rerun()
             else:
-                st.error("Erro ao cadastrar tarefa.")
-                if resposta is not None:
-                    st.write(resposta.text)
+                st.error("Não foi possível cadastrar a tarefa. Verifique os dados e tente novamente.")
 
-    tarefas = _filtrar_tarefas(api_get("tarefas"))
+    registros_tarefas = api_get("tarefas")
+    if registros_tarefas is None:
+        return
+    tarefas = _filtrar_tarefas(registros_tarefas)
     if not tarefas:
         st.info("Nenhuma tarefa cadastrada ainda.")
         return
@@ -88,62 +91,62 @@ def modulo_tarefas():
     st.subheader("Tarefas cadastradas")
     st.dataframe(_normalizar_tarefas(tarefas, disciplinas), use_container_width=True, hide_index=True)
 
-    st.subheader("Editar ou excluir tarefa")
-    tarefas_com_id = [t for t in tarefas if _valor(t, "id", "task_id", "tarefas_id", padrao=None) not in [None, "-"]]
-    if not tarefas_com_id:
-        st.info("Nenhuma tarefa com código válido para editar ou excluir.")
-        return
+    with st.expander("Editar ou excluir tarefa", expanded=False):
+        tarefas_com_id = [t for t in tarefas if _valor(t, "id", "task_id", "tarefas_id", padrao=None) not in [None, "-"]]
+        if not tarefas_com_id:
+            st.info("Nenhuma tarefa com código válido para editar ou excluir.")
+            return
 
-    opcoes_tarefas = {
-        f"{_valor(t, 'nome_tarefa', 'tarefa', 'nome', 'titulo', padrao='Tarefa sem título')} (#{_valor(t, 'id', 'task_id', 'tarefas_id')})": t
-        for t in tarefas_com_id
-    }
-    escolha = st.selectbox("Selecione a tarefa", list(opcoes_tarefas.keys()))
-    tarefa = opcoes_tarefas[escolha]
-    tarefa_id = _valor(tarefa, "id", "task_id", "tarefas_id")
+        opcoes_tarefas = {
+            f"{_valor(t, 'nome_tarefa', 'tarefa', 'nome', 'titulo', padrao='Tarefa sem título')} (#{_valor(t, 'id', 'task_id', 'tarefas_id')})": t
+            for t in tarefas_com_id
+        }
+        escolha = st.selectbox("Selecione a tarefa", list(opcoes_tarefas.keys()))
+        tarefa = opcoes_tarefas[escolha]
+        tarefa_id = _valor(tarefa, "id", "task_id", "tarefas_id")
 
-    with st.form("editar_tarefa_form"):
-        nome_edit = st.text_input("Tarefa", value=_valor(tarefa, "nome_tarefa", "tarefa", "nome", "titulo", padrao=""))
-        disc_atual = _valor(tarefa, "disc_id", "disciplina_id", "disciplinas_id", padrao=None)
-        nomes = list(opcoes_disciplinas.keys())
-        indice = 0
-        for i, nome_disc in enumerate(nomes):
-            if opcoes_disciplinas[nome_disc] == disc_atual:
-                indice = i
-                break
-        disciplina_edit = st.selectbox("Disciplina", nomes, index=indice)
-        status_opcoes = ["Pendente", "Em andamento", "Concluída"]
-        status_atual = _valor(tarefa, "status", padrao="Pendente")
-        status_indice = status_opcoes.index(status_atual) if status_atual in status_opcoes else 0
-        status_edit = st.selectbox("Status", status_opcoes, index=status_indice)
-        salvar = st.form_submit_button("Salvar alterações")
+        with st.form("editar_tarefa_form"):
+            nome_edit = st.text_input("Tarefa", value=_valor(tarefa, "nome_tarefa", "tarefa", "nome", "titulo", padrao=""))
+            disc_atual = _valor(tarefa, "disc_id", "disciplina_id", "disciplinas_id", padrao=None)
+            nomes = list(opcoes_disciplinas.keys())
+            indice = 0
+            for i, nome_disc in enumerate(nomes):
+                if opcoes_disciplinas[nome_disc] == disc_atual:
+                    indice = i
+                    break
+            disciplina_edit = st.selectbox("Disciplina", nomes, index=indice)
+            status_opcoes = ["Pendente", "Em andamento", "Concluída"]
+            status_atual = _valor(tarefa, "status", padrao="Pendente")
+            status_indice = status_opcoes.index(status_atual) if status_atual in status_opcoes else 0
+            status_edit = st.selectbox("Status", status_opcoes, index=status_indice)
+            col_salvar, col_excluir = st.columns(2)
+            with col_salvar:
+                salvar = st.form_submit_button("Salvar alterações")
+            with col_excluir:
+                excluir = st.form_submit_button("Excluir tarefa", type="secondary")
 
-    if salvar:
-        resposta = api_patch(
-            "tarefas",
-            tarefa_id,
-            {
-                "tipo": "tarefa",
-                "nome_tarefa": nome_edit,
-                "nome": nome_edit,
-                "disc_id": opcoes_disciplinas[disciplina_edit],
-                "status": status_edit,
-            },
-        )
-        if resposta is not None and resposta.status_code in [200, 201]:
-            st.success("Tarefa atualizada!")
-            st.rerun()
-        else:
-            st.error("Erro ao atualizar tarefa.")
-            if resposta is not None:
-                st.write(resposta.text)
+        if salvar:
+            resposta = api_patch(
+                "tarefas",
+                tarefa_id,
+                {
+                    "tipo": "tarefa",
+                    "nome_tarefa": nome_edit,
+                    "nome": nome_edit,
+                    "disc_id": opcoes_disciplinas[disciplina_edit],
+                    "status": status_edit,
+                },
+            )
+            if resposta is not None and resposta.status_code in [200, 201]:
+                st.success("Tarefa atualizada!")
+                st.rerun()
+            else:
+                st.error("Não foi possível atualizar a tarefa. Tente novamente.")
 
-    if st.button("Excluir tarefa", type="secondary"):
-        resposta = api_delete("tarefas", tarefa_id)
-        if resposta is not None and resposta.status_code in [200, 204]:
-            st.success("Tarefa excluída!")
-            st.rerun()
-        else:
-            st.error("Erro ao excluir tarefa.")
-            if resposta is not None:
-                st.write(resposta.text)
+        if excluir:
+            resposta = api_delete("tarefas", tarefa_id)
+            if resposta is not None and resposta.status_code in [200, 204]:
+                st.success("Tarefa excluída!")
+                st.rerun()
+            else:
+                st.error("Não foi possível excluir a tarefa. Tente novamente.")

@@ -19,7 +19,7 @@ def _disciplinas_por_id(disciplinas):
 
 
 def _eh_tarefa(item):
-    return item.get("tipo", "tarefa") == "tarefa" and _valor(item, "nota", padrao=None) in [None, ""]
+    return item.get("tipo", "tarefa") != "nota"
 
 
 def _tarefas_pendentes(tarefas):
@@ -36,7 +36,7 @@ def _df_desempenho(disciplinas, registros):
         return pd.DataFrame(columns=["disc_id", "Disciplina", "Media", "Qtd notas"])
 
     mapa = _disciplinas_por_id(disciplinas)
-    notas = [item for item in registros if _valor(item, "nota", padrao=None) not in [None, ""]]
+    notas = [item for item in registros if item.get("tipo") == "nota"]
     if not notas:
         return pd.DataFrame(
             [{"disc_id": disc_id, "Disciplina": nome, "Media": 0.0, "Qtd notas": 0} for disc_id, nome in mapa.items()]
@@ -158,6 +158,8 @@ def modulo_automacoes():
 
     disciplinas = api_get("disciplinas")
     registros = api_get("tarefas")
+    if disciplinas is None or registros is None:
+        return
     tarefas = [item for item in registros if _eh_tarefa(item)]
     desempenho = _df_desempenho(disciplinas, registros)
     pendentes = _tarefas_pendentes(tarefas)

@@ -40,6 +40,8 @@ def _normalizar_notas(registros, disciplinas):
     mapa_disciplinas = {disc.get("id"): disc.get("nome_disciplina", "Disciplina") for disc in disciplinas}
     linhas = []
     for item in registros:
+        if item.get("tipo") != "nota":
+            continue
         nota = _valor(item, "nota", padrao=None)
         if nota in [None, ""]:
             continue
@@ -69,6 +71,8 @@ def modulo_notas():
     st.header("Notas")
 
     disciplinas = api_get("disciplinas")
+    if disciplinas is None:
+        return
     if not disciplinas:
         st.warning("Cadastre uma disciplina primeiro.")
         return
@@ -100,11 +104,11 @@ def modulo_notas():
                 st.success("Nota cadastrada!")
                 st.rerun()
             else:
-                st.error("Erro ao cadastrar nota.")
-                if resposta is not None:
-                    st.write(resposta.text)
+                st.error("Não foi possível cadastrar a nota. Verifique os dados e tente novamente.")
 
     registros = api_get("tarefas")
+    if registros is None:
+        return
     df = _normalizar_notas(registros, disciplinas)
     if df.empty:
         st.info("Nenhuma nota cadastrada ainda.")
@@ -113,56 +117,56 @@ def modulo_notas():
     st.subheader("Notas cadastradas")
     st.dataframe(df.drop(columns=["disc_id"]), use_container_width=True, hide_index=True)
 
-    st.subheader("Editar ou excluir nota")
-    opcoes_notas = {f"{linha['Atividade']} - {linha['Disciplina']} (#{linha['Código']})": linha for _, linha in df.iterrows() if linha["Código"] != "-"}
-    if not opcoes_notas:
-        st.info("Nenhuma nota com código válido para editar ou excluir.")
-        return
+    with st.expander("Editar ou excluir nota", expanded=False):
+        opcoes_notas = {f"{linha['Atividade']} - {linha['Disciplina']} (#{linha['Código']})": linha for _, linha in df.iterrows() if linha["Código"] != "-"}
+        if not opcoes_notas:
+            st.info("Nenhuma nota com código válido para editar ou excluir.")
+            return
 
-    escolha = st.selectbox("Selecione a nota", list(opcoes_notas.keys()))
-    selecionada = opcoes_notas[escolha]
-    nota_id = selecionada["Código"]
+        escolha = st.selectbox("Selecione a nota", list(opcoes_notas.keys()))
+        selecionada = opcoes_notas[escolha]
+        nota_id = selecionada["Código"]
 
-    with st.form("editar_nota_form"):
-        nome_edit = st.text_input("Atividade", value=selecionada["Atividade"])
-        nomes_disciplinas = list(opcoes_disciplinas.keys())
-        disciplina_indice = 0
-        for i, nome_disc in enumerate(nomes_disciplinas):
-            if opcoes_disciplinas[nome_disc] == selecionada["disc_id"]:
-                disciplina_indice = i
-                break
-        disciplina_edit = st.selectbox("Disciplina", nomes_disciplinas, index=disciplina_indice)
-        nota_edit = st.number_input("Nota", min_value=0.0, max_value=10.0, value=float(selecionada["Nota"]), step=0.1)
-        data_edit = st.date_input("Data da avaliação", value=_parse_data(selecionada["Data"]), format="DD/MM/YYYY")
-        salvar = st.form_submit_button("Salvar alterações")
+        with st.form("editar_nota_form"):
+            nome_edit = st.text_input("Atividade", value=selecionada["Atividade"])
+            nomes_disciplinas = list(opcoes_disciplinas.keys())
+            disciplina_indice = 0
+            for i, nome_disc in enumerate(nomes_disciplinas):
+                if opcoes_disciplinas[nome_disc] == selecionada["disc_id"]:
+                    disciplina_indice = i
+                    break
+            disciplina_edit = st.selectbox("Disciplina", nomes_disciplinas, index=disciplina_indice)
+            nota_edit = st.number_input("Nota", min_value=0.0, max_value=10.0, value=float(selecionada["Nota"]), step=0.1)
+            data_edit = st.date_input("Data da avaliação", value=_parse_data(selecionada["Data"]), format="DD/MM/YYYY")
+            col_salvar, col_excluir = st.columns(2)
+            with col_salvar:
+                salvar = st.form_submit_button("Salvar alterações")
+            with col_excluir:
+                excluir = st.form_submit_button("Excluir nota", type="secondary")
 
-    if salvar:
-        resposta = api_patch(
-            "tarefas",
-            nota_id,
-            {
-                "tipo": "nota",
-                "nome": nome_edit,
-                "nome_tarefa": nome_edit,
-                "disc_id": opcoes_disciplinas[disciplina_edit],
-                "nota": nota_edit,
-                "data": data_edit.isoformat(),
-            },
-        )
-        if resposta is not None and resposta.status_code in [200, 201]:
-            st.success("Nota atualizada!")
-            st.rerun()
-        else:
-            st.error("Erro ao atualizar nota.")
-            if resposta is not None:
-                st.write(resposta.text)
+        if salvar:
+            resposta = api_patch(
+                "tarefas",
+                nota_id,
+                {
+                    "tipo": "nota",
+                    "nome": nome_edit,
+                    "nome_tarefa": nome_edit,
+                    "disc_id": opcoes_disciplinas[disciplina_edit],
+                    "nota": nota_edit,
+                    "data": data_edit.isoformat(),
+                },
+            )
+            if resposta is not None and resposta.status_code in [200, 201]:
+                st.success("Nota atualizada!")
+                st.rerun()
+            else:
+                st.error("Não foi possível atualizar a nota. Tente novamente.")
 
-    if st.button("Excluir nota", type="secondary"):
-        resposta = api_delete("tarefas", nota_id)
-        if resposta is not None and resposta.status_code in [200, 204]:
-            st.success("Nota excluída!")
-            st.rerun()
-        else:
-            st.error("Erro ao excluir nota.")
-            if resposta is not None:
-                st.write(resposta.text)
+        if excluir:
+            resposta = api_delete("tarefas", nota_id)
+            if resposta is not None and resposta.status_code in [200, 204]:
+                st.success("Nota excluída!")
+                st.rerun()
+            else:
+                st.error("Não foi possível excluir a nota. Tente novamente.")

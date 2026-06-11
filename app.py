@@ -12,6 +12,8 @@ from modules.automacoes import modulo_automacoes
 from styles import TEMAS, carregar_css
 
 REQUEST_TIMEOUT = 10
+DEFAULT_THEME = "Rosé"
+THEME_VERSION = "theme-persist-v3"
 
 
 st.set_page_config(
@@ -21,20 +23,33 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-if "tema_visual_v2" not in st.session_state:
-    st.session_state.tema_visual_v2 = "Rosé"
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
 
-tema_atual = st.session_state.get("tema_visual_v2", "Rosé")
-if tema_atual not in TEMAS:
-    tema_atual = "Rosé"
+opcoes_tema = list(TEMAS.keys())
+tema_padrao = DEFAULT_THEME if DEFAULT_THEME in opcoes_tema else opcoes_tema[0]
+
+if st.session_state.get("tema_visual_version") != THEME_VERSION:
+    st.session_state.tema_visual_v2 = tema_padrao
+    st.session_state.tema_visual_version = THEME_VERSION
+
+if "tema_visual_v2" not in st.session_state:
+    st.session_state.tema_visual_v2 = tema_padrao
+
+tema_atual = st.session_state.get("tema_visual_v2", tema_padrao)
+if tema_atual not in opcoes_tema:
+    tema_atual = tema_padrao
     st.session_state.tema_visual_v2 = tema_atual
 
-tema_escolhido = st.sidebar.selectbox(
-    "Tema",
-    list(TEMAS.keys()),
-    index=list(TEMAS.keys()).index(tema_atual),
-    key="tema_visual_v2",
-)
+if st.session_state.logged_in:
+    tema_escolhido = st.sidebar.selectbox(
+        "Tema",
+        opcoes_tema,
+        index=opcoes_tema.index(tema_atual),
+        key="tema_visual_v2",
+    )
+else:
+    tema_escolhido = tema_atual
 
 carregar_css(tema_escolhido)
 
@@ -98,86 +113,133 @@ def tela_acesso():
                 </div>
                 """,
                 unsafe_allow_html=True,
-            )
+        )
         st.markdown("</div>", unsafe_allow_html=True)
 
     with col_dir:
+        mostrar_recuperacao = st.query_params.get("recuperar_senha") == "1"
         tab_login, tab_cadastro = st.tabs(["Entrar", "Criar minha conta"])
 
         with tab_login:
-            st.markdown(
-                """
-                <h2 style="color:#311942;">
-                    Bem-vindo de volta!
-                </h2>
-                <p style="color:#cf3aed;">
-                    Entre na sua conta para continuar sua jornada.
-                </p>
-                """,
-                unsafe_allow_html=True,
-            )
+            if mostrar_recuperacao:
+                st.markdown(
+                    """
+                    <h2 style="color:var(--primary);">
+                        Alterar senha
+                    </h2>
+                    <p style="color:var(--muted);">
+                        Informe seu e-mail para receber o link de recuperação.
+                    </p>
+                    """,
+                    unsafe_allow_html=True,
+                )
 
-            with st.form("login_form"):
-                email = st.text_input("E-mail", placeholder="seu@email.com")
-                senha = st.text_input("Senha", type="password", placeholder="Digite sua senha")
+                with st.form("recuperar_senha_form"):
+                    email_recuperacao = st.text_input(
+                        "E-mail da conta",
+                        placeholder="seu@email.com",
+                    )
 
-                if st.form_submit_button("Acessar meu painel"):
-                    try:
-                        resposta = requests.post(
-                            f"{BASE_URL}/auth/login",
-                            json={"email": email, "password": senha},
-                            timeout=REQUEST_TIMEOUT,
-                        )
-                    except requests.RequestException as exc:
-                        st.error(f"Erro ao comunicar com a API: {exc}")
-                        st.stop()
-
-                    if resposta.status_code == 200:
-                        dados = resposta.json()
-                        token = dados.get("authToken") or dados.get("auth_token") or dados.get("token")
-
-                        if not token:
-                            st.error("A API respondeu, mas não retornou token.")
-                            st.write(dados)
-                            st.stop()
-
-                        st.session_state.auth_token = token
+                    if st.form_submit_button("Enviar link de recuperação"):
                         try:
-                            usuario = requests.get(
-                                f"{BASE_URL}/auth/me",
-                                headers={"Authorization": f"Bearer {token}"},
+                            resposta = requests.get(
+                                f"{BASE_URL}/reset/request-reset-link",
+                                params={"email": email_recuperacao},
                                 timeout=REQUEST_TIMEOUT,
                             )
-                        except requests.RequestException as exc:
-                            st.error(f"Erro ao carregar dados do usuário: {exc}")
+                        except requests.RequestException:
+                            st.error("Não foi possível enviar o link agora. Tente novamente em instantes.")
                             st.stop()
 
-                        if usuario.status_code == 200:
-                            user_data = usuario.json()
-                            st.session_state.user_id = user_data.get("id")
-                            st.session_state.user_name = (
-                                user_data.get("name")
-                                or user_data.get("nome")
-                                or email.split("@")[0]
+                        if resposta.status_code == 200:
+                            st.success("Se o e-mail estiver cadastrado, você receberá o link de recuperação.")
+                        else:
+                            st.error("Não foi possível enviar o link. Verifique o e-mail e tente novamente.")
+
+                st.markdown(
+                    '<a class="forgot-password-link" href="/">Voltar para o login</a>',
+                    unsafe_allow_html=True,
+                )
+            else:
+                st.markdown(
+                    """
+                    <h2 style="color:var(--primary);">
+                        Bem-vindo de volta!
+                    </h2>
+                    <p style="color:var(--muted);">
+                        Entre na sua conta para continuar sua jornada.
+                    </p>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+                with st.form("login_form"):
+                    email = st.text_input("E-mail", placeholder="seu@email.com")
+                    senha = st.text_input("Senha", type="password", placeholder="Digite sua senha")
+
+                    col_acessar, col_esqueci = st.columns([1, 1])
+                    with col_acessar:
+                        acessar_painel = st.form_submit_button("Acessar meu painel")
+                    with col_esqueci:
+                        st.markdown(
+                            '<a class="forgot-password-link forgot-password-inline" href="/?recuperar_senha=1">Esqueceu a senha?</a>',
+                            unsafe_allow_html=True,
+                        )
+
+                    if acessar_painel:
+                        try:
+                            resposta = requests.post(
+                                f"{BASE_URL}/auth/login",
+                                json={"email": email, "password": senha},
+                                timeout=REQUEST_TIMEOUT,
                             )
-                            st.session_state.user_email = user_data.get("email", email)
+                        except requests.RequestException:
+                            st.error("Não foi possível entrar agora. Tente novamente em instantes.")
+                            st.stop()
 
-                        st.session_state.logged_in = True
-                        st.success("Login realizado com sucesso!")
-                        st.rerun()
+                        if resposta.status_code == 200:
+                            dados = resposta.json()
+                            token = dados.get("authToken") or dados.get("auth_token") or dados.get("token")
 
-                    else:
-                        st.error("Credenciais inválidas ou erro na API.")
-                        st.write("Status:", resposta.status_code)
-                        st.write("Resposta da API:", resposta.text)
+                            if not token:
+                                st.error("Não foi possível concluir o login. Tente novamente.")
+                                st.stop()
+
+                            st.session_state.auth_token = token
+                            try:
+                                usuario = requests.get(
+                                    f"{BASE_URL}/auth/me",
+                                    headers={"Authorization": f"Bearer {token}"},
+                                    timeout=REQUEST_TIMEOUT,
+                                )
+                            except requests.RequestException:
+                                st.error("Não foi possível carregar seus dados. Tente novamente.")
+                                st.stop()
+
+                            if usuario.status_code == 200:
+                                user_data = usuario.json()
+                                st.session_state.user_id = user_data.get("id")
+                                st.session_state.user_name = (
+                                    user_data.get("name")
+                                    or user_data.get("nome")
+                                    or email.split("@")[0]
+                                )
+                                st.session_state.user_email = user_data.get("email", email)
+
+                            st.session_state.logged_in = True
+                            st.success("Login realizado com sucesso!")
+                            st.rerun()
+
+                        else:
+                            st.error("E-mail ou senha inválidos.")
 
         with tab_cadastro:
             st.markdown(
                 """
-                <h2 style="color:#311942;">
+                <h2 style="color:var(--primary);">
                     Crie sua conta!
                 </h2>
-                <p style="color:#cf3aed;">
+                <p style="color:var(--muted);">
                     Junte-se a nós e transforme sua jornada acadêmica.
                 </p>
                 """,
@@ -196,20 +258,15 @@ def tela_acesso():
                             json={"name": nome, "email": email, "password": senha},
                             timeout=REQUEST_TIMEOUT,
                         )
-                    except requests.RequestException as exc:
-                        st.error(f"Erro ao comunicar com a API: {exc}")
+                    except requests.RequestException:
+                        st.error("Não foi possível criar a conta agora. Tente novamente em instantes.")
                         st.stop()
 
                     if resposta.status_code in [200, 201]:
                         st.success("Conta criada com sucesso! Agora faça login.")
                     else:
-                        st.error("Erro ao cadastrar usuário.")
-                        st.write("Status:", resposta.status_code)
-                        st.write("Resposta da API:", resposta.text)
+                        st.error("Não foi possível criar a conta. Verifique os dados e tente novamente.")
 
-
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
 
 if not st.session_state.logged_in:
     tela_acesso()
@@ -231,7 +288,12 @@ else:
 
         st.markdown("---")
         if st.button("Sair"):
+            tema_atual = st.session_state.get("tema_visual_v2", DEFAULT_THEME)
+            versao_tema = st.session_state.get("tema_visual_version", THEME_VERSION)
             st.session_state.clear()
+            st.session_state.tema_visual_v2 = tema_atual
+            st.session_state.tema_visual_version = versao_tema
+            st.session_state.logged_in = False
             st.rerun()
 
     if menu == "Painel Geral":
