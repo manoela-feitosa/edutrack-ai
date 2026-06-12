@@ -81,7 +81,7 @@ TEMAS = {
         "card_border": "rgba(52,64,84,0.18)",
         "shadow": "rgba(52,64,84,0.10)",
     },
-    "Rosé": {
+    "Algodão Doce": {
         "bg1": "#F4C7D5",
         "bg2": "#A99BC8",
         "bg3": "#16213E",
@@ -262,12 +262,12 @@ def carregar_css(nome_tema="Oceano"):
     }}
 
     .beneficio-icone {{
-        width: 70px;
-        height: 70px;
+        width: 86px;
+        height: 86px;
         border-radius: 50%;
         background: color-mix(in srgb, var(--primary) 14%, white);
         color: var(--primary);
-        font-size: 22px;
+        font-size: 45px;
         font-weight: 760;
         display: flex;
         align-items: center;

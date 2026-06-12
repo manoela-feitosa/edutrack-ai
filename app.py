@@ -12,7 +12,7 @@ from modules.automacoes import modulo_automacoes
 from utils.styles import TEMAS, carregar_css
 
 REQUEST_TIMEOUT = 10
-DEFAULT_THEME = "Rosé"
+DEFAULT_THEME = "Algodão Doce"
 THEME_VERSION = "force-light-components-v1"
 
 
@@ -85,7 +85,7 @@ def tela_acesso():
             st.markdown(
                 """
                 <div class="beneficio-card">
-                    <div class="beneficio-icone">OK</div>
+                    <div class="beneficio-icone">🛡️</div>
                     <b>Seguro</b>
                     <small>Seus dados<br>protegidos</small>
                 </div>
@@ -96,7 +96,7 @@ def tela_acesso():
             st.markdown(
                 """
                 <div class="beneficio-card">
-                    <div class="beneficio-icone">AI</div>
+                    <div class="beneficio-icone">🧠</div>
                     <b>Inteligente</b>
                     <small>IA para apoiar<br>seus estudos</small>
                 </div>
@@ -107,7 +107,7 @@ def tela_acesso():
             st.markdown(
                 """
                 <div class="beneficio-card">
-                    <div class="beneficio-icone">ID</div>
+                    <div class="beneficio-icone">👤</div>
                     <b>Personalizado</b>
                     <small>Feito para<br>sua rotina</small>
                 </div>
