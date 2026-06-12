@@ -13,7 +13,7 @@ from utils.styles import TEMAS, carregar_css
 
 REQUEST_TIMEOUT = 10
 DEFAULT_THEME = "Algodão Doce"
-THEME_VERSION = "force-light-components-v1"
+THEME_VERSION = "login-default-theme-v1"
 
 
 st.set_page_config(
@@ -49,7 +49,7 @@ if st.session_state.logged_in:
         key="tema_visual_v2",
     )
 else:
-    tema_escolhido = tema_atual
+    tema_escolhido = tema_padrao
 
 carregar_css(tema_escolhido)
 
