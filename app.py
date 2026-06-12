@@ -23,12 +23,15 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+# Garante que o Streamlit saiba se o usuario ja esta autenticado.
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
+# Define e valida o tema visual usado na interface.
 opcoes_tema = list(TEMAS.keys())
 tema_padrao = DEFAULT_THEME if DEFAULT_THEME in opcoes_tema else opcoes_tema[0]
 
+# Atualiza o tema quando ha mudanca de versao visual do app.
 if st.session_state.get("tema_visual_version") != THEME_VERSION:
     st.session_state.tema_visual_v2 = tema_padrao
     st.session_state.tema_visual_version = THEME_VERSION
@@ -42,6 +45,7 @@ if tema_atual not in opcoes_tema:
     st.session_state.tema_visual_v2 = tema_atual
 
 if st.session_state.logged_in:
+    # Depois do login, o usuario pode escolher o tema no menu lateral.
     tema_escolhido = st.sidebar.selectbox(
         "Tema",
         opcoes_tema,
@@ -49,12 +53,14 @@ if st.session_state.logged_in:
         key="tema_visual_v2",
     )
 else:
+    # Antes do login, a tela inicial usa sempre o tema padrao claro.
     tema_escolhido = tema_padrao
 
 carregar_css(tema_escolhido)
 
 
 def tela_acesso():
+    # Renderiza a tela publica de login, cadastro e recuperacao de senha.
     col_esq, col_dir = st.columns([1.05, 0.95])
 
     with col_esq:

@@ -9,6 +9,7 @@ from services.api import api_get
 
 
 def _valor(item, *nomes, padrao=""):
+    # Busca um campo aceitando nomes alternativos vindos do Xano.
     for nome in nomes:
         if nome in item and item.get(nome) not in [None, ""]:
             return item.get(nome)
@@ -16,18 +17,22 @@ def _valor(item, *nomes, padrao=""):
 
 
 def _tipo(item):
+    # Normaliza o tipo para diferenciar tarefa e nota.
     return str(_valor(item, "tipo", "Tipo", padrao="tarefa")).strip().lower()
 
 
 def _disciplinas_por_id(disciplinas):
+    # Cria um mapa para encontrar o nome da disciplina pelo id.
     return {disc.get("id"): disc.get("nome_disciplina", "Disciplina") for disc in disciplinas}
 
 
 def _eh_tarefa(item):
+    # Tudo que nao for nota entra na Central como tarefa.
     return _tipo(item) != "nota"
 
 
 def _tarefas_pendentes(tarefas):
+    # Separa tarefas que ainda nao foram concluidas.
     pendentes = []
     for tarefa in tarefas:
         status = str(_valor(tarefa, "status", padrao="Pendente")).lower()
@@ -37,6 +42,7 @@ def _tarefas_pendentes(tarefas):
 
 
 def _df_desempenho(disciplinas, registros):
+    # Calcula media e quantidade de notas por disciplina.
     if not disciplinas:
         return pd.DataFrame(columns=["disc_id", "Disciplina", "Media", "Qtd notas"])
 
@@ -59,6 +65,7 @@ def _df_desempenho(disciplinas, registros):
 
 
 def _recomendacoes(desempenho):
+    # Cria alertas para disciplinas com desempenho baixo.
     mensagens = []
     for item in desempenho.to_dict("records"):
         if item["Media"] == 0:
@@ -71,6 +78,7 @@ def _recomendacoes(desempenho):
 
 
 def _opcoes_atividades(desempenho, tarefas):
+    # Monta a lista de atividades usadas no cronograma automatico.
     atividades = []
     if not desempenho.empty:
         for item in desempenho.to_dict("records"):
@@ -86,6 +94,7 @@ def _opcoes_atividades(desempenho, tarefas):
     return list(dict.fromkeys(atividades))
 
 
+# Distribui estudos e tarefas pendentes pelos dias da semana.
 def _plano_estudos(desempenho, tarefas):
     dias = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"]
     opcoes = _opcoes_atividades(desempenho, tarefas)
@@ -107,6 +116,7 @@ def _plano_estudos(desempenho, tarefas):
 
 
 def _progresso_tarefas(tarefas):
+    # Calcula o percentual de tarefas concluidas.
     total = len(tarefas)
     if total == 0:
         return 0
@@ -115,6 +125,7 @@ def _progresso_tarefas(tarefas):
 
 
 def _boletim(disciplinas, tarefas, registros):
+    # Resume media, tarefas e disciplinas do boletim semanal.
     desempenho = _df_desempenho(disciplinas, registros)
     pendentes = _tarefas_pendentes(tarefas)
     validas = desempenho[desempenho["Media"] > 0] if not desempenho.empty else desempenho
@@ -131,6 +142,7 @@ def _boletim(disciplinas, tarefas, registros):
 
 
 def _calendar_payload(titulo, tipo_evento, disciplina, data_evento):
+    # Monta titulo, descricao e data do evento do calendario.
     data_iso = data_evento.isoformat() if hasattr(data_evento, "isoformat") else str(data_evento)
     partes_descricao = [f"Tipo: {tipo_evento}"]
     if disciplina and disciplina != "Sem disciplina":
@@ -152,6 +164,7 @@ def _calendar_payload(titulo, tipo_evento, disciplina, data_evento):
 
 
 def _google_calendar_url(payload):
+    # Transforma os dados do evento em um link do Google Calendar.
     data_inicio = payload["start"]["date"].replace("-", "")
     data_fim = (date.fromisoformat(payload["end"]["date"]) + timedelta(days=1)).strftime("%Y%m%d")
     params = {
@@ -164,6 +177,7 @@ def _google_calendar_url(payload):
 
 
 def _render_boletim(boletim):
+    # Renderiza o boletim semanal na interface do Streamlit.
     c1, c2, c3 = st.columns(3)
     c1.metric("Média atual", boletim["Média atual"])
     c2.metric("Concluídas", boletim["Tarefas concluídas"])
@@ -180,6 +194,7 @@ def _render_boletim(boletim):
 
 
 def modulo_automacoes():
+    # Monta a pagina Central de Rotina e chama os calculos auxiliares.
     st.header("Central de Rotina")
     st.caption("Acompanhe alertas, metas, boletim semanal, calendário e organização da rotina acadêmica.")
 
