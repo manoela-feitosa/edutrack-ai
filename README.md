@@ -55,3 +55,5 @@ O sistema é composto pelos seguintes módulos:
 * Sistema de notificações.
 * Aplicativo mobile.
 * Relatórios acadêmicos mais avançados.
+
+## link do app : https://edutrack-ai-mf.streamlit.app/
