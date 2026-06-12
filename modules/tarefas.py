@@ -16,11 +16,7 @@ def _tipo(item):
 
 
 def _filtrar_tarefas(registros):
-    return [
-        item
-        for item in registros
-        if _tipo(item) != "nota"
-    ]
+    return [item for item in registros if _tipo(item) != "nota"]
 
 
 def _normalizar_tarefas(tarefas, disciplinas):
@@ -61,8 +57,16 @@ def modulo_tarefas():
 
     with st.expander("Nova tarefa", expanded=True):
         nome = st.text_input("Nome da tarefa")
-        disciplina_escolhida = st.selectbox("Disciplina", options=list(opcoes_disciplinas.keys()))
-        status = st.selectbox("Status", ["Pendente", "Em andamento", "Concluída"])
+        disciplina_escolhida = st.selectbox(
+            "Disciplina",
+            options=list(opcoes_disciplinas.keys()),
+            key="tarefa_nova_disciplina",
+        )
+        status = st.selectbox(
+            "Status",
+            ["Pendente", "Em andamento", "Concluída"],
+            key="tarefa_nova_status",
+        )
 
         if st.button("Salvar tarefa"):
             if not nome:
@@ -105,29 +109,49 @@ def modulo_tarefas():
             f"{_valor(t, 'nome_tarefa', 'tarefa', 'nome', 'titulo', padrao='Tarefa sem título')} (#{_valor(t, 'id', 'task_id', 'tarefas_id')})": t
             for t in tarefas_com_id
         }
-        escolha = st.selectbox("Selecione a tarefa", list(opcoes_tarefas.keys()))
+        escolha = st.selectbox(
+            "Selecione a tarefa",
+            list(opcoes_tarefas.keys()),
+            key="tarefa_editar_item",
+        )
         tarefa = opcoes_tarefas[escolha]
         tarefa_id = _valor(tarefa, "id", "task_id", "tarefas_id")
 
-        with st.form("editar_tarefa_form"):
-            nome_edit = st.text_input("Tarefa", value=_valor(tarefa, "nome_tarefa", "tarefa", "nome", "titulo", padrao=""))
-            disc_atual = _valor(tarefa, "disc_id", "disciplina_id", "disciplinas_id", padrao=None)
-            nomes = list(opcoes_disciplinas.keys())
-            indice = 0
-            for i, nome_disc in enumerate(nomes):
-                if opcoes_disciplinas[nome_disc] == disc_atual:
-                    indice = i
-                    break
-            disciplina_edit = st.selectbox("Disciplina", nomes, index=indice)
-            status_opcoes = ["Pendente", "Em andamento", "Concluída"]
-            status_atual = _valor(tarefa, "status", padrao="Pendente")
-            status_indice = status_opcoes.index(status_atual) if status_atual in status_opcoes else 0
-            status_edit = st.selectbox("Status", status_opcoes, index=status_indice)
-            col_salvar, col_excluir = st.columns(2)
-            with col_salvar:
-                salvar = st.form_submit_button("Salvar alterações")
-            with col_excluir:
-                excluir = st.form_submit_button("Excluir tarefa", type="secondary")
+        nome_edit = st.text_input("Tarefa", value=_valor(tarefa, "nome_tarefa", "tarefa", "nome", "titulo", padrao=""))
+        disc_atual = _valor(tarefa, "disc_id", "disciplina_id", "disciplinas_id", padrao=None)
+        nomes = list(opcoes_disciplinas.keys())
+        indice = 0
+        for i, nome_disc in enumerate(nomes):
+            if opcoes_disciplinas[nome_disc] == disc_atual:
+                indice = i
+                break
+        disciplina_edit = st.selectbox(
+            "Disciplina",
+            nomes,
+            index=indice,
+            key="tarefa_editar_disciplina",
+        )
+        status_opcoes = ["Pendente", "Em andamento", "Concluída"]
+        status_atual = _valor(tarefa, "status", padrao="Pendente")
+        status_indice = status_opcoes.index(status_atual) if status_atual in status_opcoes else 0
+        status_edit = st.selectbox(
+            "Status",
+            status_opcoes,
+            index=status_indice,
+            key="tarefa_editar_status",
+        )
+        confirmar_exclusao = st.checkbox("Confirmar exclusão da tarefa selecionada")
+
+        col_salvar, _, col_excluir = st.columns([1, 2, 1])
+        with col_salvar:
+            salvar = st.button("Salvar alterações", key="salvar_tarefa")
+        with col_excluir:
+            excluir = st.button(
+                "Excluir tarefa",
+                type="secondary",
+                disabled=not confirmar_exclusao,
+                key="excluir_tarefa",
+            )
 
         if salvar:
             resposta = api_patch(

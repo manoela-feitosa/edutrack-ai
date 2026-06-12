@@ -50,23 +50,28 @@ def modulo_professores():
             st.info("Nenhum professor com código válido para editar ou excluir.")
             return
 
-        escolha = st.selectbox("Selecione o professor", list(opcoes_professores.keys()))
+        escolha = st.selectbox(
+            "Selecione o professor",
+            list(opcoes_professores.keys()),
+            key="professor_editar_item",
+        )
         professor = opcoes_professores[escolha]
         professor_id = professor["id"]
 
-        with st.form("editar_professor_form"):
-            nome_edit = st.text_input("Nome", value=_valor(professor, "nome"))
-            email_edit = st.text_input("E-mail", value=_valor(professor, "email"))
-            confirmar_exclusao = st.checkbox("Confirmar exclusão do professor selecionado")
-            col_salvar, col_excluir = st.columns(2)
-            with col_salvar:
-                salvar = st.form_submit_button("Salvar alterações")
-            with col_excluir:
-                excluir = st.form_submit_button(
-                    "Excluir professor",
-                    type="secondary",
-                    disabled=not confirmar_exclusao,
-                )
+        nome_edit = st.text_input("Nome", value=_valor(professor, "nome"))
+        email_edit = st.text_input("E-mail", value=_valor(professor, "email"))
+        confirmar_exclusao = st.checkbox("Confirmar exclusão do professor selecionado")
+
+        col_salvar, _, col_excluir = st.columns([1, 2, 1])
+        with col_salvar:
+            salvar = st.button("Salvar alterações", key="salvar_professor")
+        with col_excluir:
+            excluir = st.button(
+                "Excluir professor",
+                type="secondary",
+                disabled=not confirmar_exclusao,
+                key="excluir_professor",
+            )
 
         if salvar:
             if not nome_edit or not email_edit:

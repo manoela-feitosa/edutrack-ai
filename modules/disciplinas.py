@@ -31,7 +31,11 @@ def modulo_disciplinas():
 
     with st.expander("Nova disciplina", expanded=True):
         nome = st.text_input("Nome da disciplina")
-        professor_escolhido = st.selectbox("Professor responsável", options=list(opcoes_professores.keys()))
+        professor_escolhido = st.selectbox(
+            "Professor responsável",
+            options=list(opcoes_professores.keys()),
+            key="disciplina_novo_professor",
+        )
 
         if st.button("Salvar disciplina"):
             if not nome:
@@ -70,30 +74,40 @@ def modulo_disciplinas():
             st.info("Nenhuma disciplina com código válido para editar ou excluir.")
             return
 
-        escolha = st.selectbox("Selecione a disciplina", list(opcoes_disciplinas.keys()))
+        escolha = st.selectbox(
+            "Selecione a disciplina",
+            list(opcoes_disciplinas.keys()),
+            key="disciplina_editar_item",
+        )
         disciplina = opcoes_disciplinas[escolha]
         disciplina_id = disciplina["id"]
 
-        with st.form("editar_disciplina_form"):
-            nome_edit = st.text_input("Disciplina", value=_valor(disciplina, "nome_disciplina"))
-            nomes_professores = list(opcoes_professores.keys())
-            prof_atual = disciplina.get("prof_id")
-            prof_indice = 0
-            for i, nome_prof in enumerate(nomes_professores):
-                if opcoes_professores[nome_prof] == prof_atual:
-                    prof_indice = i
-                    break
-            professor_edit = st.selectbox("Professor responsável", nomes_professores, index=prof_indice)
-            confirmar_exclusao = st.checkbox("Confirmar exclusão da disciplina selecionada")
-            col_salvar, col_excluir = st.columns(2)
-            with col_salvar:
-                salvar = st.form_submit_button("Salvar alterações")
-            with col_excluir:
-                excluir = st.form_submit_button(
-                    "Excluir disciplina",
-                    type="secondary",
-                    disabled=not confirmar_exclusao,
-                )
+        nome_edit = st.text_input("Disciplina", value=_valor(disciplina, "nome_disciplina"))
+        nomes_professores = list(opcoes_professores.keys())
+        prof_atual = disciplina.get("prof_id")
+        prof_indice = 0
+        for i, nome_prof in enumerate(nomes_professores):
+            if opcoes_professores[nome_prof] == prof_atual:
+                prof_indice = i
+                break
+        professor_edit = st.selectbox(
+            "Professor responsável",
+            nomes_professores,
+            index=prof_indice,
+            key="disciplina_editar_professor",
+        )
+        confirmar_exclusao = st.checkbox("Confirmar exclusão da disciplina selecionada")
+
+        col_salvar, _, col_excluir = st.columns([1, 2, 1])
+        with col_salvar:
+            salvar = st.button("Salvar alterações", key="salvar_disciplina")
+        with col_excluir:
+            excluir = st.button(
+                "Excluir disciplina",
+                type="secondary",
+                disabled=not confirmar_exclusao,
+                key="excluir_disciplina",
+            )
 
         if salvar:
             if not nome_edit:

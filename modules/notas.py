@@ -85,7 +85,11 @@ def modulo_notas():
 
     with st.expander("Lançar nota", expanded=True):
         nome = st.text_input("Nome da atividade/avaliação")
-        disciplina_escolhida = st.selectbox("Disciplina", options=list(opcoes_disciplinas.keys()))
+        disciplina_escolhida = st.selectbox(
+            "Disciplina",
+            options=list(opcoes_disciplinas.keys()),
+            key="nota_nova_disciplina",
+        )
         nota = st.number_input("Nota", min_value=0.0, max_value=10.0, value=0.0, step=0.1)
         data_avaliacao = st.date_input("Data da avaliação", value=date.today(), format="DD/MM/YYYY")
 
@@ -122,31 +126,50 @@ def modulo_notas():
     st.dataframe(df.drop(columns=["disc_id"]), use_container_width=True, hide_index=True)
 
     with st.expander("Editar ou excluir nota", expanded=False):
-        opcoes_notas = {f"{linha['Atividade']} - {linha['Disciplina']} (#{linha['Código']})": linha for _, linha in df.iterrows() if linha["Código"] != "-"}
+        opcoes_notas = {
+            f"{linha['Atividade']} - {linha['Disciplina']} (#{linha['Código']})": linha
+            for _, linha in df.iterrows()
+            if linha["Código"] != "-"
+        }
         if not opcoes_notas:
             st.info("Nenhuma nota com código válido para editar ou excluir.")
             return
 
-        escolha = st.selectbox("Selecione a nota", list(opcoes_notas.keys()))
+        escolha = st.selectbox(
+            "Selecione a nota",
+            list(opcoes_notas.keys()),
+            key="nota_editar_item",
+        )
         selecionada = opcoes_notas[escolha]
         nota_id = selecionada["Código"]
 
-        with st.form("editar_nota_form"):
-            nome_edit = st.text_input("Atividade", value=selecionada["Atividade"])
-            nomes_disciplinas = list(opcoes_disciplinas.keys())
-            disciplina_indice = 0
-            for i, nome_disc in enumerate(nomes_disciplinas):
-                if opcoes_disciplinas[nome_disc] == selecionada["disc_id"]:
-                    disciplina_indice = i
-                    break
-            disciplina_edit = st.selectbox("Disciplina", nomes_disciplinas, index=disciplina_indice)
-            nota_edit = st.number_input("Nota", min_value=0.0, max_value=10.0, value=float(selecionada["Nota"]), step=0.1)
-            data_edit = st.date_input("Data da avaliação", value=_parse_data(selecionada["Data"]), format="DD/MM/YYYY")
-            col_salvar, col_excluir = st.columns(2)
-            with col_salvar:
-                salvar = st.form_submit_button("Salvar alterações")
-            with col_excluir:
-                excluir = st.form_submit_button("Excluir nota", type="secondary")
+        nome_edit = st.text_input("Atividade", value=selecionada["Atividade"])
+        nomes_disciplinas = list(opcoes_disciplinas.keys())
+        disciplina_indice = 0
+        for i, nome_disc in enumerate(nomes_disciplinas):
+            if opcoes_disciplinas[nome_disc] == selecionada["disc_id"]:
+                disciplina_indice = i
+                break
+        disciplina_edit = st.selectbox(
+            "Disciplina",
+            nomes_disciplinas,
+            index=disciplina_indice,
+            key="nota_editar_disciplina",
+        )
+        nota_edit = st.number_input("Nota", min_value=0.0, max_value=10.0, value=float(selecionada["Nota"]), step=0.1)
+        data_edit = st.date_input("Data da avaliação", value=_parse_data(selecionada["Data"]), format="DD/MM/YYYY")
+        confirmar_exclusao = st.checkbox("Confirmar exclusão da nota selecionada")
+
+        col_salvar, _, col_excluir = st.columns([1, 2, 1])
+        with col_salvar:
+            salvar = st.button("Salvar alterações", key="salvar_nota")
+        with col_excluir:
+            excluir = st.button(
+                "Excluir nota",
+                type="secondary",
+                disabled=not confirmar_exclusao,
+                key="excluir_nota",
+            )
 
         if salvar:
             resposta = api_patch(

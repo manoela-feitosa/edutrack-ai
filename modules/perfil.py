@@ -74,8 +74,8 @@ def modulo_perfil():
                 st.error("Não foi possível salvar o perfil. Tente novamente.")
 
     with st.expander("Excluir conta", expanded=False):
-        st.warning("Esta ação exclui sua conta e seus dados de acesso. Essa ação não pode ser desfeita.")
-        confirmar = st.text_input("Digite EXCLUIR para confirmar")
+        st.warning("Sua conta será excluída permanentemente.")
+        confirmar = st.text_input("Tem certeza? Digite EXCLUIR para confirmar")
         if st.button("Excluir minha conta", type="secondary", disabled=confirmar != "EXCLUIR"):
             resposta = api_delete_endpoint("auth/me")
             if resposta is not None and resposta.status_code in [200, 204]:

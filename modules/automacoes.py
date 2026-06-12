@@ -1,5 +1,6 @@
 from datetime import date, timedelta
 from html import escape
+from urllib.parse import urlencode
 
 import pandas as pd
 import streamlit as st
@@ -118,26 +119,48 @@ def _boletim(disciplinas, tarefas, registros):
     pendentes = _tarefas_pendentes(tarefas)
     validas = desempenho[desempenho["Media"] > 0] if not desempenho.empty else desempenho
     melhor = validas.sort_values("Media", ascending=False).iloc[0]["Disciplina"] if not validas.empty else "Sem notas"
-    dificuldade = validas.sort_values("Media").iloc[0]["Disciplina"] if not validas.empty else "Sem notas"
+    atencao = validas.sort_values("Media").iloc[0]["Disciplina"] if not validas.empty else "Sem notas"
     media = round(float(validas["Media"].mean()), 1) if not validas.empty else 0
     return {
         "Média atual": media,
         "Tarefas concluídas": len(tarefas) - len(pendentes),
         "Tarefas pendentes": len(pendentes),
         "Melhor disciplina": melhor,
-        "Disciplina com mais dificuldade": dificuldade,
+        "Precisa de atenção": atencao,
     }
 
 
-def _calendar_payload(nome_tarefa, disciplina, data_entrega):
-    data_iso = data_entrega.isoformat() if hasattr(data_entrega, "isoformat") else str(data_entrega)
+def _calendar_payload(titulo, tipo_evento, disciplina, data_evento):
+    data_iso = data_evento.isoformat() if hasattr(data_evento, "isoformat") else str(data_evento)
+    partes_descricao = [f"Tipo: {tipo_evento}"]
+    if disciplina and disciplina != "Sem disciplina":
+        partes_descricao.append(f"Disciplina: {disciplina}")
+    partes_descricao.append("Criado pelo EduTrack AI.")
+
+    if disciplina and disciplina != "Sem disciplina":
+        summary = f"{tipo_evento}: {titulo} - {disciplina}"
+    else:
+        summary = f"{tipo_evento}: {titulo}"
+
     return {
-        "summary": nome_tarefa,
-        "description": f"Entrega de {disciplina} criada pelo EduTrack AI.",
+        "summary": summary,
+        "description": " | ".join(partes_descricao),
         "start": {"date": data_iso},
         "end": {"date": data_iso},
         "status": "google_calendar_ready",
     }
+
+
+def _google_calendar_url(payload):
+    data_inicio = payload["start"]["date"].replace("-", "")
+    data_fim = (date.fromisoformat(payload["end"]["date"]) + timedelta(days=1)).strftime("%Y%m%d")
+    params = {
+        "action": "TEMPLATE",
+        "text": payload["summary"],
+        "details": payload["description"],
+        "dates": f"{data_inicio}/{data_fim}",
+    }
+    return f"https://calendar.google.com/calendar/render?{urlencode(params)}"
 
 
 def _render_boletim(boletim):
@@ -146,11 +169,11 @@ def _render_boletim(boletim):
     c2.metric("Concluídas", boletim["Tarefas concluídas"])
     c3.metric("Pendentes", boletim["Tarefas pendentes"])
     melhor = escape(str(boletim["Melhor disciplina"]))
-    dificuldade = escape(str(boletim["Disciplina com mais dificuldade"]))
+    atencao = escape(str(boletim["Precisa de atenção"]))
     st.markdown(
         f"""
         <div class="automation-card"><b>Melhor disciplina</b><br><span>{melhor}</span></div>
-        <div class="automation-card"><b>Mais dificuldade</b><br><span>{dificuldade}</span></div>
+        <div class="automation-card"><b>Precisa de atenção</b><br><span>{atencao}</span></div>
         """,
         unsafe_allow_html=True,
     )
@@ -202,22 +225,33 @@ def modulo_automacoes():
             st.success("Nenhuma tarefa pendente.")
 
     st.subheader("Google Calendar")
-    with st.expander("Preparar evento de calendário", expanded=True):
-        nomes_disciplinas = {disc.get("nome_disciplina", "Disciplina"): disc.get("id") for disc in disciplinas}
-        nome_tarefa = st.text_input("Nome do evento", "Trabalho de Banco de Dados")
-        disciplina = st.selectbox("Disciplina", list(nomes_disciplinas.keys()) or ["Disciplina"])
-        data_entrega = st.date_input("Data de entrega", value=date.today() + timedelta(days=7), format="DD/MM/YYYY")
-        payload = _calendar_payload(nome_tarefa, disciplina, data_entrega)
+    with st.expander("Adicionar evento ao calendário", expanded=True):
+        nomes_disciplinas = ["Sem disciplina"] + [disc.get("nome_disciplina", "Disciplina") for disc in disciplinas]
+        titulo_evento = st.text_input("Título do evento", "Trabalho de Banco de Dados")
+        tipo_evento = st.selectbox(
+            "Tipo de evento",
+            ["Prova", "Trabalho", "Estudo", "Entrega", "Pessoal", "Outro"],
+            key="calendar_tipo_evento",
+        )
+        disciplina = st.selectbox(
+            "Disciplina",
+            nomes_disciplinas,
+            help="Opcional. Para eventos acadêmicos, selecione uma disciplina se fizer sentido.",
+            key="calendar_disciplina",
+        )
+        data_evento = st.date_input("Data do evento", value=date.today() + timedelta(days=7), format="DD/MM/YYYY")
+        payload = _calendar_payload(titulo_evento, tipo_evento, disciplina, data_evento)
         st.markdown(
             f"""
             <div class="automation-card calendar-preview">
                 <b>{escape(payload['summary'])}</b><br>
                 <span>{escape(payload['description'])}</span><br>
-                <small>Data: {data_entrega.strftime('%d/%m/%Y')}</small>
+                <small>Data: {data_evento.strftime('%d/%m/%Y')}</small>
             </div>
             """,
             unsafe_allow_html=True,
         )
+        st.link_button("Adicionar ao Google Calendar", _google_calendar_url(payload))
 
     st.subheader("Cronograma automático")
     plano = _plano_estudos(desempenho, tarefas)
