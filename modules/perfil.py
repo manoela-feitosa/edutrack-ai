@@ -1,10 +1,21 @@
 import streamlit as st
 
-from services.api import api_delete_endpoint, api_patch_endpoint
+from services.api import api_delete_endpoint, api_get, api_patch_endpoint
+from utils.api_ui import sucesso_ou_erro
+
+
+def _carregar_usuario():
+    usuario = api_get("auth/me", use_cache=False)
+    if isinstance(usuario, dict):
+        st.session_state.user_name = usuario.get("name") or st.session_state.get("user_name", "")
+        st.session_state.user_email = usuario.get("email") or st.session_state.get("user_email", "")
+        if usuario.get("id") is not None:
+            st.session_state.user_id = usuario.get("id")
 
 
 def modulo_perfil():
     st.header("Perfil")
+    _carregar_usuario()
 
     nome_atual = st.session_state.get("user_name", "")
     email_atual = st.session_state.get("user_email", "")
@@ -59,28 +70,27 @@ def modulo_perfil():
             placeholder="Ex.: melhorar minhas notas e organizar melhor meus prazos",
         )
         lembretes = st.checkbox("Receber lembretes de tarefas", value=lembretes_atual)
+        st.caption(
+            "Nome e e-mail são sincronizados com o Xano. Curso, semestre, objetivo e lembretes "
+            "ficam salvos nesta sessão até existir tabela de perfil no backend."
+        )
 
         if st.button("Salvar perfil"):
             resposta = api_patch_endpoint("auth/me", {"name": nome})
-            if resposta is not None and resposta.status_code in [200, 201]:
+            if sucesso_ou_erro(resposta, sucesso="Perfil salvo com sucesso!", erro="Não foi possível salvar o perfil."):
                 st.session_state.user_name = nome
                 st.session_state.user_curso = curso
                 st.session_state.user_semestre = semestre if semestre != "Selecione o semestre" else ""
                 st.session_state.user_objetivo = objetivo
                 st.session_state.user_lembretes = lembretes
-                st.success("Perfil salvo com sucesso!")
                 st.rerun()
-            else:
-                st.error("Não foi possível salvar o perfil. Tente novamente.")
 
     with st.expander("Excluir conta", expanded=False):
         st.warning("Sua conta será excluída permanentemente.")
         confirmar = st.text_input("Tem certeza? Digite EXCLUIR para confirmar")
         if st.button("Excluir minha conta", type="secondary", disabled=confirmar != "EXCLUIR"):
             resposta = api_delete_endpoint("auth/me")
-            if resposta is not None and resposta.status_code in [200, 204]:
+            if sucesso_ou_erro(resposta, sucesso="Conta excluída.", erro="Não foi possível excluir sua conta."):
                 st.session_state.clear()
-                st.success("Conta excluída.")
+                st.session_state.logged_in = False
                 st.rerun()
-            else:
-                st.error("Não foi possível excluir sua conta. Tente novamente.")

@@ -1,7 +1,10 @@
+from datetime import date, datetime
+
 import pandas as pd
 import streamlit as st
 
 from services.api import api_delete, api_get, api_patch, api_post
+from utils.api_ui import sucesso_ou_erro
 
 
 def _valor(item, *nomes, padrao=""):
@@ -19,6 +22,29 @@ def _filtrar_tarefas(registros):
     return [item for item in registros if _tipo(item) != "nota"]
 
 
+def _formatar_data(valor):
+    if not valor:
+        return "—"
+    texto = str(valor)[:10]
+    if "-" in texto:
+        partes = texto.split("-")
+        if len(partes) == 3:
+            return f"{partes[2]}/{partes[1]}/{partes[0]}"
+    return texto
+
+
+def _parse_data(valor):
+    if not valor:
+        return date.today()
+    texto = str(valor)[:10]
+    for formato in ("%Y-%m-%d", "%d/%m/%Y"):
+        try:
+            return datetime.strptime(texto, formato).date()
+        except ValueError:
+            pass
+    return date.today()
+
+
 def _normalizar_tarefas(tarefas, disciplinas):
     mapa_disciplinas = {disc.get("id"): disc.get("nome_disciplina", "Disciplina") for disc in disciplinas}
     linhas = []
@@ -29,10 +55,11 @@ def _normalizar_tarefas(tarefas, disciplinas):
                 "Código": _valor(tarefa, "id", "task_id", "tarefas_id", padrao="-"),
                 "Tarefa": _valor(tarefa, "nome_tarefa", "tarefa", "nome", "titulo", padrao="Tarefa sem título"),
                 "Disciplina": mapa_disciplinas.get(disc_id, _valor(tarefa, "disciplina", "nome_disciplina", padrao="Não informada")),
+                "Prazo": _formatar_data(_valor(tarefa, "data", "prazo", padrao="")),
                 "Status": _valor(tarefa, "status", padrao="Pendente"),
             }
         )
-    return pd.DataFrame(linhas, columns=["Código", "Tarefa", "Disciplina", "Status"])
+    return pd.DataFrame(linhas, columns=["Código", "Tarefa", "Disciplina", "Prazo", "Status"])
 
 
 def _opcoes_por_id(itens, campo_nome):
@@ -62,6 +89,7 @@ def modulo_tarefas():
             options=list(opcoes_disciplinas.keys()),
             key="tarefa_nova_disciplina",
         )
+        prazo = st.date_input("Prazo", value=date.today(), format="DD/MM/YYYY")
         status = st.selectbox(
             "Status",
             ["Pendente", "Em andamento", "Concluída"],
@@ -80,13 +108,11 @@ def modulo_tarefas():
                     "nome": nome,
                     "disc_id": opcoes_disciplinas[disciplina_escolhida],
                     "status": status,
+                    "data": prazo.isoformat(),
                 },
             )
-            if resposta is not None and resposta.status_code in [200, 201]:
-                st.success("Tarefa cadastrada!")
+            if sucesso_ou_erro(resposta, sucesso="Tarefa cadastrada!", erro="Não foi possível cadastrar a tarefa."):
                 st.rerun()
-            else:
-                st.error("Não foi possível cadastrar a tarefa. Verifique os dados e tente novamente.")
 
     registros_tarefas = api_get("tarefas")
     if registros_tarefas is None:
@@ -131,6 +157,12 @@ def modulo_tarefas():
             index=indice,
             key="tarefa_editar_disciplina",
         )
+        prazo_edit = st.date_input(
+            "Prazo",
+            value=_parse_data(_valor(tarefa, "data", "prazo", padrao="")),
+            format="DD/MM/YYYY",
+            key="tarefa_editar_prazo",
+        )
         status_opcoes = ["Pendente", "Em andamento", "Concluída"]
         status_atual = _valor(tarefa, "status", padrao="Pendente")
         status_indice = status_opcoes.index(status_atual) if status_atual in status_opcoes else 0
@@ -163,18 +195,13 @@ def modulo_tarefas():
                     "nome": nome_edit,
                     "disc_id": opcoes_disciplinas[disciplina_edit],
                     "status": status_edit,
+                    "data": prazo_edit.isoformat(),
                 },
             )
-            if resposta is not None and resposta.status_code in [200, 201]:
-                st.success("Tarefa atualizada!")
+            if sucesso_ou_erro(resposta, sucesso="Tarefa atualizada!", erro="Não foi possível atualizar a tarefa."):
                 st.rerun()
-            else:
-                st.error("Não foi possível atualizar a tarefa. Tente novamente.")
 
         if excluir:
             resposta = api_delete("tarefas", tarefa_id)
-            if resposta is not None and resposta.status_code in [200, 204]:
-                st.success("Tarefa excluída!")
+            if sucesso_ou_erro(resposta, sucesso="Tarefa excluída!", erro="Não foi possível excluir a tarefa."):
                 st.rerun()
-            else:
-                st.error("Não foi possível excluir a tarefa. Tente novamente.")

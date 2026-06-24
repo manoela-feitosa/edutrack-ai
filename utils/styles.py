@@ -82,15 +82,15 @@ TEMAS = {
         "shadow": "rgba(52,64,84,0.10)",
     },
     "Algodão Doce": {
-        "bg1": "#F4C7D5",
-        "bg2": "#A99BC8",
-        "bg3": "#16213E",
+        "bg1": "#F8D7E8",
+        "bg2": "#DCC7F0",
+        "bg3": "#D8E5F7",
         "text": "#3A2430",
         "muted": "#7A5B68",
-        "primary": "#B8326A",
-        "primary2": "#D85C88",
-        "accent": "#8B5E83",
-        "card": "rgba(255,255,255,0.78)",
+        "primary": "#EC4899",
+        "primary2": "#A855F7",
+        "accent": "#A855F7",
+        "card": "rgba(255,255,255,0.82)",
         "card_border": "rgba(184,50,106,0.18)",
         "shadow": "rgba(184,50,106,0.11)",
     },
@@ -497,7 +497,259 @@ def carregar_css(nome_tema="Oceano"):
         margin-top: 12px;
     }}
 
+    [data-testid="stToolbar"],
+    [data-testid="stDecoration"],
+    [data-testid="stStatusWidget"] {{
+        visibility: hidden !important;
+        height: 0 !important;
+        position: fixed !important;
+    }}
+
+    .app-ambient-bg {{
+        position: fixed;
+        z-index: 0;
+        pointer-events: none;
+        right: -220px;
+        top: 72px;
+        width: min(48vw, 760px);
+        opacity: .18;
+        filter: saturate(1.08);
+    }}
+
+    [data-testid="stSidebar"] {{
+        background: rgba(255,255,255,.86) !important;
+        border-right: 1px solid rgba(168,85,247,.16);
+        box-shadow: 18px 0 55px rgba(110,69,183,.08);
+    }}
+
+    [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {{
+        gap: .85rem;
+    }}
+
+    .sidebar-brand {{
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 10px 0 14px;
+    }}
+
+    .sidebar-brand-title {{
+        font-size: 1.12rem;
+        font-weight: 820;
+        color: #1F2937;
+        line-height: 1.1;
+    }}
+
+    .sidebar-brand-title span {{
+        color: #A855F7;
+    }}
+
+    .sidebar-brand-subtitle {{
+        font-size: .72rem !important;
+    }}
+
+    .sidebar-user-card {{
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: #F8F5FF;
+        border: 1px solid rgba(168,85,247,.14);
+        border-radius: 14px;
+        padding: 12px;
+        margin-bottom: 8px;
+        box-shadow: 0 8px 22px rgba(110,69,183,.07);
+    }}
+
+    .sidebar-user-card strong {{
+        display: block;
+        color: #1F2937 !important;
+        font-size: .92rem;
+        line-height: 1.1;
+    }}
+
+    .sidebar-user-card small {{
+        display: block;
+        max-width: 170px;
+        color: #6B7280 !important;
+        font-size: .72rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }}
+
+    .sidebar-divider {{
+        height: 1px;
+        background: rgba(168,85,247,.16);
+        margin: 12px 0 4px;
+    }}
+
+    .theme-picker-label {{
+        margin: 8px 0 -4px;
+        color: #6B7280;
+        font-size: .78rem;
+        font-weight: 800;
+    }}
+
+    .brand-mark,
+    .avatar {{
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        color: white !important;
+        background: linear-gradient(135deg, #EC4899, #A855F7);
+        box-shadow: 0 8px 20px rgba(168,85,247,.28);
+    }}
+
+    .brand-mark {{
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        font-size: 20px;
+    }}
+
+    .avatar {{
+        width: 38px;
+        height: 38px;
+        border-radius: 999px;
+        font-weight: 800;
+        font-size: .86rem;
+    }}
+
+    div[role="radiogroup"] label {{
+        border-radius: 12px;
+        padding: 8px 10px;
+        transition: background .16s ease, transform .16s ease;
+    }}
+
+    div[role="radiogroup"] label:hover {{
+        background: #F8F5FF;
+    }}
+
+    div[role="radiogroup"] label:has(input:checked) {{
+        background: linear-gradient(135deg, rgba(236,72,153,.12), rgba(168,85,247,.12));
+        color: #A855F7 !important;
+        font-weight: 800 !important;
+    }}
+
+    .dashboard-hero {{
+        position: relative;
+        overflow: hidden;
+        min-height: 230px;
+        margin-bottom: 18px;
+        border-radius: 22px;
+        border: 1px solid rgba(255,255,255,.78);
+        background:
+            radial-gradient(circle at 82% 30%, rgba(168,85,247,.34), transparent 30%),
+            linear-gradient(135deg, rgba(255,255,255,.94), rgba(248,245,255,.78));
+        padding: 28px 32px;
+        box-shadow: 0 20px 60px rgba(110,69,183,.12);
+        backdrop-filter: blur(16px);
+    }}
+
+    .dashboard-hero h2 {{
+        font-size: 2rem;
+        line-height: 1.16;
+        margin: 10px 0;
+        max-width: 560px;
+        color: #171044;
+    }}
+
+    .dashboard-hero p {{
+        max-width: 540px;
+        color: #5B4B86;
+        line-height: 1.55;
+        margin: 0;
+        font-size: 1rem;
+    }}
+
+    .dashboard-hero .hero-books {{
+        position: absolute;
+        right: -24px;
+        bottom: -78px;
+        width: min(45%, 430px);
+        filter: drop-shadow(0 26px 38px rgba(78,42,170,.22));
+    }}
+
+    .hero-kpis {{
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 22px;
+        max-width: 600px;
+    }}
+
+    .mini-stat {{
+        min-width: 124px;
+        padding: 10px 13px;
+        border-radius: 12px;
+        background: rgba(255,255,255,.82);
+        border: 1px solid rgba(168,85,247,.14);
+    }}
+
+    .mini-stat b {{
+        display: block;
+        color: #171044;
+        font-size: 1.05rem;
+    }}
+
+    .mini-stat span {{
+        color: #6B7280;
+        font-size: .72rem;
+        font-weight: 700;
+    }}
+
+    .pill {{
+        display: inline-flex;
+        align-items: center;
+        width: fit-content;
+        border-radius: 999px;
+        padding: 6px 10px;
+        background: #F3E8FF;
+        color: #A855F7;
+        font-size: .78rem;
+        font-weight: 800;
+    }}
+
+    .soft-card,
+    .card {{
+        background: rgba(255,255,255,.78);
+        border: 1px solid rgba(255,255,255,.80);
+        border-radius: 22px;
+        box-shadow: 0 20px 60px rgba(110,69,183,.12);
+        backdrop-filter: blur(16px);
+    }}
+
+    div[data-testid="metric-container"] {{
+        background: rgba(255,255,255,.82) !important;
+        border: 1px solid rgba(168,85,247,.14) !important;
+        border-radius: 18px !important;
+        box-shadow: 0 12px 34px rgba(110,69,183,.10) !important;
+    }}
+
+    .automation-card {{
+        background: rgba(255,255,255,.82) !important;
+        border: 1px solid rgba(168,85,247,.14) !important;
+        border-radius: 18px !important;
+        box-shadow: 0 12px 34px rgba(110,69,183,.10) !important;
+    }}
+
     @media (max-width: 900px) {{
+        .app-ambient-bg {{
+            width: 860px;
+            right: -560px;
+            top: 80px;
+            opacity: .12;
+        }}
+        .dashboard-hero {{
+            padding: 22px;
+            min-height: 420px;
+        }}
+        .dashboard-hero .hero-books {{
+            width: 92%;
+            right: -60px;
+            bottom: -76px;
+        }}
         .block-container {{
             padding-top: 2rem;
         }}

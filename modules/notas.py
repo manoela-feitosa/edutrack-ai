@@ -4,6 +4,7 @@ import pandas as pd
 import streamlit as st
 
 from services.api import api_delete, api_get, api_patch, api_post
+from utils.api_ui import sucesso_ou_erro
 
 
 def _valor(item, *nomes, padrao=""):
@@ -108,11 +109,8 @@ def modulo_notas():
                     "data": data_avaliacao.isoformat(),
                 },
             )
-            if resposta is not None and resposta.status_code in [200, 201]:
-                st.success("Nota cadastrada!")
+            if sucesso_ou_erro(resposta, sucesso="Nota cadastrada!", erro="Não foi possível cadastrar a nota."):
                 st.rerun()
-            else:
-                st.error("Não foi possível cadastrar a nota. Verifique os dados e tente novamente.")
 
     registros = api_get("tarefas")
     if registros is None:
@@ -184,16 +182,10 @@ def modulo_notas():
                     "data": data_edit.isoformat(),
                 },
             )
-            if resposta is not None and resposta.status_code in [200, 201]:
-                st.success("Nota atualizada!")
+            if sucesso_ou_erro(resposta, sucesso="Nota atualizada!", erro="Não foi possível atualizar a nota."):
                 st.rerun()
-            else:
-                st.error("Não foi possível atualizar a nota. Tente novamente.")
 
         if excluir:
             resposta = api_delete("tarefas", nota_id)
-            if resposta is not None and resposta.status_code in [200, 204]:
-                st.success("Nota excluída!")
+            if sucesso_ou_erro(resposta, sucesso="Nota excluída!", erro="Não foi possível excluir a nota."):
                 st.rerun()
-            else:
-                st.error("Não foi possível excluir a nota. Tente novamente.")

@@ -1,7 +1,10 @@
-﻿import requests
+﻿import base64
+from pathlib import Path
+
+import requests
 import streamlit as st
 
-from services.api import BASE_URL
+from services.api import BASE_URL, mensagem_erro
 from modules.dashboard import modulo_dashboard
 from modules.professores import modulo_professores
 from modules.disciplinas import modulo_disciplinas
@@ -14,6 +17,27 @@ from utils.styles import TEMAS, carregar_css
 REQUEST_TIMEOUT = 10
 DEFAULT_THEME = "Algodão Doce"
 THEME_VERSION = "login-default-theme-v1"
+ASSETS_DIR = Path(__file__).parent / "assets"
+
+
+def _asset_data_uri(nome_arquivo):
+    caminho = ASSETS_DIR / nome_arquivo
+    if not caminho.exists():
+        return ""
+    return f"data:image/png;base64,{base64.b64encode(caminho.read_bytes()).decode('ascii')}"
+
+
+def _render_post_login_ambient():
+    space_src = _asset_data_uri("space-bg.png")
+    if space_src:
+        st.markdown(f'<img class="app-ambient-bg" src="{space_src}" alt="">', unsafe_allow_html=True)
+
+
+def _iniciais(nome):
+    partes = [parte for parte in str(nome).split() if parte]
+    if not partes:
+        return "E"
+    return "".join(parte[0] for parte in partes[:2]).upper()
 
 
 st.set_page_config(
@@ -45,13 +69,8 @@ if tema_atual not in opcoes_tema:
     st.session_state.tema_visual_v2 = tema_atual
 
 if st.session_state.logged_in:
-    # Depois do login, o usuario pode escolher o tema no menu lateral.
-    tema_escolhido = st.sidebar.selectbox(
-        "Tema",
-        opcoes_tema,
-        index=opcoes_tema.index(tema_atual),
-        key="tema_visual_v2",
-    )
+    # Depois do login, o tema atual e aplicado e o seletor aparece no menu lateral.
+    tema_escolhido = tema_atual
 else:
     # Antes do login, a tela inicial usa sempre o tema padrao claro.
     tema_escolhido = tema_padrao
@@ -237,7 +256,10 @@ def tela_acesso():
                             st.rerun()
 
                         else:
-                            st.error("E-mail ou senha inválidos.")
+                            if resposta.status_code == 429:
+                                st.error(mensagem_erro(resposta, "Limite de requisições do Xano atingido."))
+                            else:
+                                st.error("E-mail ou senha inválidos.")
 
         with tab_cadastro:
             st.markdown(
@@ -270,17 +292,57 @@ def tela_acesso():
 
                     if resposta.status_code in [200, 201]:
                         st.success("Conta criada com sucesso! Agora faça login.")
+                    elif resposta.status_code == 429:
+                        st.error(mensagem_erro(resposta, "Limite de requisições do Xano atingido."))
                     else:
-                        st.error("Não foi possível criar a conta. Verifique os dados e tente novamente.")
+                        st.error(mensagem_erro(resposta, "Não foi possível criar a conta. Verifique os dados e tente novamente."))
 
 
 if not st.session_state.logged_in:
     tela_acesso()
 else:
+    _render_post_login_ambient()
     with st.sidebar:
-        st.title("EduTrack AI")
+        nome_usuario = st.session_state.get("user_name") or "Estudante"
+        email_usuario = st.session_state.get("user_email") or "Conta conectada"
+        iniciais_usuario = _iniciais(nome_usuario)
+
+        st.markdown(
+            """
+            <div class="sidebar-brand">
+                <span class="brand-mark">🎓</span>
+                <div>
+                    <div class="sidebar-brand-title">EduTrack <span>AI</span></div>
+                    <div class="muted sidebar-brand-subtitle">Academic Platform</div>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            f"""
+            <div class="sidebar-user-card">
+                <span class="avatar">{iniciais_usuario}</span>
+                <div>
+                    <strong>{nome_usuario}</strong>
+                    <small>{email_usuario}</small>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        st.markdown('<div class="theme-picker-label">Tema</div>', unsafe_allow_html=True)
+        st.selectbox(
+            "Tema",
+            opcoes_tema,
+            index=opcoes_tema.index(tema_atual),
+            key="tema_visual_v2",
+            label_visibility="collapsed",
+        )
+
         menu = st.radio(
-            "Gerenciar:",
+            "Navegação",
             [
                 "Painel Geral",
                 "Professores",
@@ -290,10 +352,11 @@ else:
                 "Central de Rotina",
                 "Perfil",
             ],
+            label_visibility="collapsed",
         )
 
-        st.markdown("---")
-        if st.button("Sair"):
+        st.markdown('<div class="sidebar-divider"></div>', unsafe_allow_html=True)
+        if st.button("Sair da conta"):
             tema_atual = st.session_state.get("tema_visual_v2", DEFAULT_THEME)
             versao_tema = st.session_state.get("tema_visual_version", THEME_VERSION)
             st.session_state.clear()

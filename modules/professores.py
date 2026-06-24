@@ -2,6 +2,7 @@ import pandas as pd
 import streamlit as st
 
 from services.api import api_delete, api_get, api_patch, api_post
+from utils.api_ui import sucesso_ou_erro
 
 
 def _valor(item, nome, padrao=""):
@@ -22,11 +23,8 @@ def modulo_professores():
                 return
 
             resposta = api_post("professores", {"nome": nome, "email": email})
-            if resposta is not None and resposta.status_code in [200, 201]:
-                st.success("Professor cadastrado!")
+            if sucesso_ou_erro(resposta, sucesso="Professor cadastrado!", erro="Não foi possível cadastrar o professor."):
                 st.rerun()
-            else:
-                st.error("Não foi possível cadastrar o professor. Verifique os dados e tente novamente.")
 
     dados = api_get("professores")
     if dados is None:
@@ -78,16 +76,10 @@ def modulo_professores():
                 st.warning("Preencha o nome e o e-mail do professor.")
                 return
             resposta = api_patch("professores", professor_id, {"nome": nome_edit, "email": email_edit})
-            if resposta is not None and resposta.status_code in [200, 201]:
-                st.success("Professor atualizado!")
+            if sucesso_ou_erro(resposta, sucesso="Professor atualizado!", erro="Não foi possível atualizar o professor."):
                 st.rerun()
-            else:
-                st.error("Não foi possível atualizar o professor. Tente novamente.")
 
         if excluir:
             resposta = api_delete("professores", professor_id)
-            if resposta is not None and resposta.status_code in [200, 204]:
-                st.success("Professor excluído!")
+            if sucesso_ou_erro(resposta, sucesso="Professor excluído!", erro="Não foi possível excluir o professor."):
                 st.rerun()
-            else:
-                st.error("Não foi possível excluir o professor. Tente novamente.")

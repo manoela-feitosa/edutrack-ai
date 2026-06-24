@@ -2,6 +2,7 @@ import pandas as pd
 import streamlit as st
 
 from services.api import api_delete, api_get, api_patch, api_post
+from utils.api_ui import sucesso_ou_erro
 
 
 def _valor(item, nome, padrao=""):
@@ -43,11 +44,8 @@ def modulo_disciplinas():
                 return
 
             resposta = api_post("disciplinas", {"nome_disciplina": nome, "prof_id": opcoes_professores[professor_escolhido]})
-            if resposta is not None and resposta.status_code in [200, 201]:
-                st.success("Disciplina cadastrada!")
+            if sucesso_ou_erro(resposta, sucesso="Disciplina cadastrada!", erro="Não foi possível cadastrar a disciplina."):
                 st.rerun()
-            else:
-                st.error("Não foi possível cadastrar a disciplina. Verifique os dados e tente novamente.")
 
     disciplinas = api_get("disciplinas")
     if disciplinas is None:
@@ -118,16 +116,10 @@ def modulo_disciplinas():
                 disciplina_id,
                 {"nome_disciplina": nome_edit, "prof_id": opcoes_professores[professor_edit]},
             )
-            if resposta is not None and resposta.status_code in [200, 201]:
-                st.success("Disciplina atualizada!")
+            if sucesso_ou_erro(resposta, sucesso="Disciplina atualizada!", erro="Não foi possível atualizar a disciplina."):
                 st.rerun()
-            else:
-                st.error("Não foi possível atualizar a disciplina. Tente novamente.")
 
         if excluir:
             resposta = api_delete("disciplinas", disciplina_id)
-            if resposta is not None and resposta.status_code in [200, 204]:
-                st.success("Disciplina excluída!")
+            if sucesso_ou_erro(resposta, sucesso="Disciplina excluída!", erro="Não foi possível excluir a disciplina."):
                 st.rerun()
-            else:
-                st.error("Não foi possível excluir a disciplina. Tente novamente.")

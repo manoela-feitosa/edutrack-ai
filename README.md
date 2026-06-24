@@ -1,59 +1,76 @@
-# EduTrack AI
+# EduTrack
 
-O EduTrack AI é um sistema acadêmico desenvolvido em Python utilizando Streamlit no front-end e Xano como back-end.
+O EduTrack é uma aplicação desenvolvida em Python e Streamlit para auxiliar estudantes na organização acadêmica.
 
-O objetivo do projeto é auxiliar estudantes no gerenciamento de suas atividades acadêmicas, permitindo o controle de disciplinas, professores, tarefas e notas em um ambiente centralizado e intuitivo.
+## Funcionalidades
 
-## Funcionalidades Implementadas
+- Gerenciamento de disciplinas
+- Cadastro de professores
+- Controle de tarefas e prazos
+- Registro de notas
+- Acompanhamento do desempenho acadêmico
+- Perfil do estudante
+- Interface moderna e intuitiva
 
-* Autenticação de usuários.
-* Cadastro e gerenciamento de professores.
-* Cadastro e gerenciamento de disciplinas.
-* Cadastro e acompanhamento de tarefas.
-* Registro e consulta de notas.
-* Perfil do usuário.
-* Dashboard com visualização das informações acadêmicas.
-* Integração com API do Xano para armazenamento e recuperação de dados.
+## Tecnologias utilizadas
 
-## Tecnologias Utilizadas
+- Python
+- Streamlit
+- Xano
+- Pandas
+- Plotly
+- Requests
+- Git/GitHub
 
-* Python
-* Streamlit
-* Xano
-* REST API
-* Git e GitHub
+## Status do projeto
 
-## Como Executar o Projeto
+**Projeto em desenvolvimento.**
+
+Atualmente continuo realizando melhorias e ajustes, incluindo:
+
+- Aprimoramento da interface
+- Correções de bugs
+- Melhorias nas validações dos formulários
+- Evolução do sistema de notas
+- Otimização da integração com o Xano
+- Novas funcionalidades para futuras versões
+
+## Como executar o projeto
+
+### Clonar o repositório
+
+```bash
+git clone URL_DO_REPOSITORIO
+```
+
+### Criar ambiente virtual
+
+```bash
+python -m venv .venv
+```
+
+**Windows:**
 
 ```powershell
+.venv\Scripts\activate
+```
+
+**Linux/macOS:**
+
+```bash
+source .venv/bin/activate
+```
+
+### Instalar dependências
+
+```bash
+pip install -r requirements.txt
+```
+
+### Executar o projeto
+
+```bash
 streamlit run app.py
 ```
 
-Para instalar as dependências:
-
-```powershell
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-```
-
-## Estrutura do Sistema
-
-O sistema é composto pelos seguintes módulos:
-
-* Dashboard
-* Professores
-* Disciplinas
-* Tarefas
-* Notas
-* Perfil
-* Configurações
-
-## Possíveis Melhorias Futuras
-
-* Integração com Google Calendar.
-* Persistência completa dos dados de perfil.
-* Integração com IA generativa.
-* Sistema de notificações.
-* Aplicativo mobile.
-* Relatórios acadêmicos mais avançados.
-
-## link do app : https://edutrack-ai-mf.streamlit.app/
+O arquivo principal da aplicação é `app.py`, na raiz do projeto.

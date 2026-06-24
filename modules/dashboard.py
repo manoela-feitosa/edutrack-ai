@@ -1,10 +1,21 @@
-from html import escape
+﻿from html import escape
+import base64
+from pathlib import Path
 
 import pandas as pd
 import plotly.express as px
 import streamlit as st
 
 from services.api import api_get
+
+ASSETS_DIR = Path(__file__).resolve().parents[1] / "assets"
+
+
+def _asset_data_uri(nome_arquivo):
+    caminho = ASSETS_DIR / nome_arquivo
+    if not caminho.exists():
+        return ""
+    return f"data:image/png;base64,{base64.b64encode(caminho.read_bytes()).decode('ascii')}"
 
 
 def _tipo(item):
@@ -21,11 +32,24 @@ def _eh_tarefa(item):
 
 def modulo_dashboard():
     nome_usuario = escape(st.session_state.get("user_name", "estudante"))
+    books_src = _asset_data_uri("books-left.png")
 
     st.markdown(
         f"""
-        <h1 style="font-size:48px;">Olá, {nome_usuario}!</h1>
-        <p style="font-size:20px; color:var(--primary);">Que bom te ver de novo.</p>
+        <div class="dashboard-hero">
+            <div class="pill">EduTrack AI</div>
+            <h2>Olá, {nome_usuario}!</h2>
+            <p>
+                Seu plano de estudos em um painel visual, organizado e pronto
+                para acompanhar disciplinas, tarefas e desempenho acadêmico.
+            </p>
+            <div class="hero-kpis">
+                <div class="mini-stat"><b>Foco</b><span>rotina de estudos</span></div>
+                <div class="mini-stat"><b>Notas</b><span>desempenho acadêmico</span></div>
+                <div class="mini-stat"><b>Tarefas</b><span>entregas e prazos</span></div>
+            </div>
+            {'<img class="hero-books" src="' + books_src + '" alt="Materiais de estudo">' if books_src else ''}
+        </div>
         """,
         unsafe_allow_html=True,
     )
@@ -107,14 +131,16 @@ def modulo_dashboard():
     with col_lista:
         st.subheader("Próximas tarefas")
         if tarefas:
-            for tarefa in tarefas[:5]:
+            for tarefa in sorted(tarefas, key=lambda t: str(t.get("data") or "9999-12-31"))[:5]:
                 nome = escape(tarefa.get("nome_tarefa") or tarefa.get("nome") or "Tarefa")
                 status = escape(tarefa.get("status") or "Pendente")
+                prazo_raw = tarefa.get("data") or ""
+                prazo = escape(str(prazo_raw)[:10] if prazo_raw else "Sem prazo")
                 st.markdown(
                     f"""
                     <div class="automation-card">
                         <b>{nome}</b><br>
-                        <span>{status}</span>
+                        <span>{status} · {prazo}</span>
                     </div>
                     """,
                     unsafe_allow_html=True,
